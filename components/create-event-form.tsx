@@ -141,7 +141,7 @@ export default function CreateEventForm() {
       }
 
       setIsCreated(true);
-      window.setTimeout(() => router.push("/#upcoming-events"), 1200);
+      window.setTimeout(() => router.push("/events"), 1200);
     } catch (error) {
       setErrorMessage(
         error instanceof Error

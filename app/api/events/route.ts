@@ -7,6 +7,7 @@ import {
   eventsCollection,
 } from "@/server/auth";
 import { eventTypes, type EventType } from "@/server/events";
+import { getUpcomingEvents } from "@/server/event-queries";
 
 function jsonError(message: string, status: number) {
   return Response.json({ error: message }, { status });
@@ -40,15 +41,7 @@ async function* readFileChunks(file: File): AsyncGenerator<Uint8Array> {
 
 export async function GET() {
   try {
-    await connectMongo();
-    const events = await eventsCollection
-      .find(
-        { eventDate: { $gt: new Date() } },
-        { projection: { createdByEmail: 0 } },
-      )
-      .sort({ eventDate: 1 })
-      .limit(50)
-      .toArray();
+    const events = await getUpcomingEvents();
 
     return Response.json({
       events: events.map((event) => ({

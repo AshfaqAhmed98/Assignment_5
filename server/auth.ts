@@ -2,7 +2,7 @@ import { betterAuth } from "better-auth";
 import { dash } from "@better-auth/infra";
 import { mongodbAdapter } from "@better-auth/mongo-adapter";
 import { GridFSBucket, MongoClient } from "mongodb";
-import type { EventRecord } from "./events.js";
+import type { EventJoinRecord, EventRecord } from "./events.js";
 
 function requireEnvironment(name: string, value: string | undefined) {
   if (!value) {
@@ -39,10 +39,13 @@ const databaseName = requireEnvironment(
 export const mongoClient = new MongoClient(mongoUri);
 const database = mongoClient.db(databaseName);
 export const eventsCollection = database.collection<EventRecord>("events");
+export const eventJoinsCollection =
+  database.collection<EventJoinRecord>("eventJoins");
 export const eventImagesBucket = new GridFSBucket(database, {
   bucketName: "eventImages",
 });
 let mongoConnection: Promise<MongoClient> | undefined;
+let eventJoinsIndex: Promise<string> | undefined;
 
 export function connectMongo() {
   mongoConnection ??= mongoClient.connect().catch((error: unknown) => {
@@ -51,6 +54,17 @@ export function connectMongo() {
   });
 
   return mongoConnection;
+}
+
+export function ensureEventJoinsIndex() {
+  eventJoinsIndex ??= eventJoinsCollection
+    .createIndex({ eventId: 1, userId: 1 }, { unique: true })
+    .catch((error: unknown) => {
+      eventJoinsIndex = undefined;
+      throw error;
+    });
+
+  return eventJoinsIndex;
 }
 
 const googleClientId = process.env.GOOGLE_CLIENT_ID;

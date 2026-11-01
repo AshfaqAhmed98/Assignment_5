@@ -72,10 +72,13 @@ Next.js server.
 Signed-in users can create upcoming community events from `/create-event`.
 Each event includes a title, description, type, thumbnail image URL or JPG/PNG
 upload (up to 50 MB), location, and future date/time. Uploaded thumbnails are
-stored in MongoDB GridFS. Events are stored in the
-configured MongoDB database with the creating user's email, and upcoming
-events appear in the homepage events section. Creator email addresses are not
-included in the public events response.
+stored in MongoDB GridFS. Events are stored in the configured MongoDB database
+with the creating user's email, and upcoming events appear on the public
+`/events` page and homepage. The public listing only returns future events and
+links to public event details. Signed-in users can join an event; each join stores an
+event snapshot and the user's ID, name, and email in `eventJoins`, with a unique
+event/user index to prevent duplicate registrations. Creator and participant
+email addresses are not included in public event responses.
 
 ## Project structure
 
@@ -84,6 +87,9 @@ included in the public events response.
 - `app/globals.css` — global styles
 - `app/api/auth/[...all]/route.ts` — Better Auth route handler
 - `app/api/events/route.ts` — event creation and upcoming events API
+- `app/api/events/[id]/join/route.ts` — authenticated event joining API
+- `app/events/page.tsx` — public upcoming events directory
+- `app/events/[id]/page.tsx` — public event details and join action
 - `app/create-event/page.tsx` — authenticated event creation page
 - `server/auth.ts` — Better Auth and MongoDB configuration
 - `postcss.config.mjs` — Tailwind CSS PostCSS integration

@@ -1,18 +1,8 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-
-type CreatedEvent = {
-  id: string;
-  title: string;
-  description: string;
-  type: string;
-  thumbnailUrl: string;
-  location: string;
-  eventDate: string;
-};
+import EventCard, { type PublicEvent } from "@/components/event-card";
 
 const banner = {
   background: "/community-events-background.jpg",
@@ -51,84 +41,10 @@ const communityStats = [
   },
 ];
 
-const upcomingEvents = [
-  {
-    dateTime: "2026-11-08T09:00:00",
-    date: "NOV 08",
-    category: "Neighborhood",
-    title: "Community Garden Morning",
-    description:
-      "Help prepare the shared garden for the season and meet neighbors who love to grow.",
-    location: "Riverside Garden",
-    time: "Sunday · 9:00 AM",
-    accent: "from-emerald-400/25 via-teal-500/10 to-transparent",
-    badge: "border-emerald-200/20 bg-emerald-300/10 text-emerald-100",
-  },
-  {
-    dateTime: "2026-11-14T11:00:00",
-    date: "NOV 14",
-    category: "Food support",
-    title: "A Seat at the Table",
-    description:
-      "Prepare and share a warm meal with neighbors at a welcoming community lunch.",
-    location: "Eastside Community Hall",
-    time: "Saturday · 11:00 AM",
-    accent: "from-amber-400/25 via-rose-500/10 to-transparent",
-    badge: "border-amber-200/20 bg-amber-300/10 text-amber-100",
-  },
-  {
-    dateTime: "2026-11-21T13:00:00",
-    date: "NOV 21",
-    category: "Learning",
-    title: "Skills Share Saturday",
-    description:
-      "Swap practical skills in a relaxed workshop and leave with a new idea to try.",
-    location: "Maple Street Learning Hub",
-    time: "Saturday · 1:00 PM",
-    accent: "from-cyan-400/25 via-blue-500/10 to-transparent",
-    badge: "border-cyan-200/20 bg-cyan-300/10 text-cyan-100",
-  },
-  {
-    dateTime: "2026-11-28T10:00:00",
-    date: "NOV 28",
-    category: "Youth",
-    title: "Little Neighbors, Big Ideas",
-    description:
-      "Help young people turn their ideas for a kinder neighborhood into a shared project.",
-    location: "Northside Youth Center",
-    time: "Saturday · 10:00 AM",
-    accent: "from-violet-400/25 via-fuchsia-500/10 to-transparent",
-    badge: "border-violet-200/20 bg-violet-300/10 text-violet-100",
-  },
-  {
-    dateTime: "2026-12-05T10:30:00",
-    date: "DEC 05",
-    category: "Community care",
-    title: "Winter Warmth Drive",
-    description:
-      "Sort donated essentials and help neighbors get ready for colder days.",
-    location: "Cedar Park Neighbors Center",
-    time: "Saturday · 10:30 AM",
-    accent: "from-sky-400/25 via-indigo-500/10 to-transparent",
-    badge: "border-sky-200/20 bg-sky-300/10 text-sky-100",
-  },
-  {
-    dateTime: "2026-12-12T08:30:00",
-    date: "DEC 12",
-    category: "Nature",
-    title: "Creekside Cleanup",
-    description:
-      "Spend a morning caring for a local walking trail and the wildlife around it.",
-    location: "Willow Creek Trail",
-    time: "Saturday · 8:30 AM",
-    accent: "from-lime-400/25 via-emerald-500/10 to-transparent",
-    badge: "border-lime-200/20 bg-lime-300/10 text-lime-100",
-  },
-];
-
 export default function Home() {
-  const [createdEvents, setCreatedEvents] = useState<CreatedEvent[]>([]);
+  const [createdEvents, setCreatedEvents] = useState<PublicEvent[]>([]);
   const [eventsError, setEventsError] = useState("");
+  const [isLoadingEvents, setIsLoadingEvents] = useState(true);
 
   useEffect(() => {
     let isMounted = true;
@@ -142,7 +58,7 @@ export default function Home() {
         });
         const result = (await response.json()) as {
           error?: string;
-          events?: CreatedEvent[];
+          events?: PublicEvent[];
         };
 
         if (!response.ok) {
@@ -152,6 +68,7 @@ export default function Home() {
         if (isMounted) {
           setCreatedEvents(result.events ?? []);
           setEventsError("");
+          setIsLoadingEvents(false);
         }
       } catch (error) {
         if (isMounted && !controller.signal.aborted) {
@@ -160,6 +77,7 @@ export default function Home() {
               ? error.message
               : "Unable to load upcoming events.",
           );
+          setIsLoadingEvents(false);
         }
       }
     }
@@ -171,33 +89,6 @@ export default function Home() {
       controller.abort();
     };
   }, []);
-
-  const displayedEvents = [
-    ...createdEvents.map((event) => {
-      const eventDate = new Date(event.eventDate);
-
-      return {
-        ...event,
-        dateTime: event.eventDate,
-        date: eventDate
-          .toLocaleDateString("en", { month: "short", day: "2-digit" })
-          .toUpperCase(),
-        category: event.type,
-        time: eventDate.toLocaleString("en", {
-          weekday: "long",
-          hour: "numeric",
-          minute: "2-digit",
-        }),
-        accent: "from-violet-400/25 via-fuchsia-500/10 to-transparent",
-        badge: "border-fuchsia-200/20 bg-fuchsia-300/10 text-fuchsia-100",
-      };
-    }),
-    ...upcomingEvents.map((event) => ({
-      ...event,
-      id: `sample:${event.title}`,
-      thumbnailUrl: "",
-    })),
-  ];
 
   return (
     <main className="flex-1 bg-[#1a1424] text-white">
@@ -431,9 +322,12 @@ export default function Home() {
                 feel a little closer.
               </p>
             </div>
-            <span className="w-fit rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-white/60">
-              Community events
-            </span>
+              <Link
+                href="/events"
+                className="w-fit rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-white/70 transition hover:border-fuchsia-200/30 hover:text-white"
+              >
+                Browse all events
+              </Link>
           </div>
 
           {eventsError && (
@@ -441,66 +335,34 @@ export default function Home() {
               role="status"
               className="mb-5 rounded-xl border border-amber-200/20 bg-amber-300/5 px-4 py-3 text-sm text-amber-100"
             >
-              {eventsError} Showing sample events instead.
+              {eventsError}
+            </p>
+          )}
+
+          {isLoadingEvents && (
+            <p role="status" className="mb-5 text-sm text-white/60">
+              Loading upcoming events…
             </p>
           )}
 
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {displayedEvents.map((event) => (
-              <article
-                key={event.id}
-                className={`group overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br ${event.accent} p-px transition duration-300 hover:-translate-y-1 hover:border-white/20`}
-              >
-                <div className="flex h-full flex-col rounded-[15px] bg-[#171421]/95 p-5 sm:p-6">
-                  {event.thumbnailUrl && (
-                    <div className="relative mb-4 aspect-[16/9] overflow-hidden rounded-xl border border-white/10 bg-white/5">
-                      <Image
-                        src={event.thumbnailUrl}
-                        alt=""
-                        fill
-                        unoptimized
-                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                        className="object-cover"
-                      />
-                    </div>
-                  )}
-                  <div className="flex items-center justify-between gap-3">
-                    <span
-                      className={`rounded-full border px-3 py-1 text-[0.65rem] font-semibold tracking-wide ${event.badge}`}
-                    >
-                      {event.category}
-                    </span>
-                    <time
-                      dateTime={event.dateTime}
-                      className="text-xs font-bold tracking-[0.12em] text-white/75"
-                    >
-                      {event.date}
-                    </time>
-                  </div>
-                  <h3 className="mt-5 text-lg font-bold tracking-tight text-white sm:text-xl">
-                    {event.title}
-                  </h3>
-                  <p className="mt-2 flex-1 text-sm leading-6 text-white/65">
-                    {event.description}
-                  </p>
-                  <div className="mt-5 space-y-2 border-t border-white/10 pt-4 text-xs text-white/65">
-                    <p className="flex items-center gap-2">
-                      <span aria-hidden="true" className="text-fuchsia-200">
-                        ◆
-                      </span>
-                      {event.location}
-                    </p>
-                    <p className="flex items-center gap-2">
-                      <span aria-hidden="true" className="text-cyan-200">
-                        ◷
-                      </span>
-                      {event.time}
-                    </p>
-                  </div>
-                </div>
-              </article>
+            {createdEvents.map((event) => (
+              <EventCard key={event.id} event={event} />
             ))}
           </div>
+          {!isLoadingEvents && !eventsError && createdEvents.length === 0 && (
+            <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-6 py-10 text-center">
+              <p className="text-sm text-white/65">
+                There are no upcoming community events yet.
+              </p>
+              <Link
+                href="/create-event"
+                className="mt-4 inline-flex min-h-11 items-center justify-center rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 px-5 text-sm font-bold text-white transition hover:brightness-110"
+              >
+                Create the first event
+              </Link>
+            </div>
+          )}
         </div>
       </section>
 
