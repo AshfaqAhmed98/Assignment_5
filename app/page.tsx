@@ -39,6 +39,81 @@ const communityStats = [
   },
 ];
 
+const upcomingEvents = [
+  {
+    dateTime: "2026-11-08T09:00:00",
+    date: "NOV 08",
+    category: "Neighborhood",
+    title: "Community Garden Morning",
+    description:
+      "Help prepare the shared garden for the season and meet neighbors who love to grow.",
+    location: "Riverside Garden",
+    time: "Sunday · 9:00 AM",
+    accent: "from-emerald-400/25 via-teal-500/10 to-transparent",
+    badge: "border-emerald-200/20 bg-emerald-300/10 text-emerald-100",
+  },
+  {
+    dateTime: "2026-11-14T11:00:00",
+    date: "NOV 14",
+    category: "Food support",
+    title: "A Seat at the Table",
+    description:
+      "Prepare and share a warm meal with neighbors at a welcoming community lunch.",
+    location: "Eastside Community Hall",
+    time: "Saturday · 11:00 AM",
+    accent: "from-amber-400/25 via-rose-500/10 to-transparent",
+    badge: "border-amber-200/20 bg-amber-300/10 text-amber-100",
+  },
+  {
+    dateTime: "2026-11-21T13:00:00",
+    date: "NOV 21",
+    category: "Learning",
+    title: "Skills Share Saturday",
+    description:
+      "Swap practical skills in a relaxed workshop and leave with a new idea to try.",
+    location: "Maple Street Learning Hub",
+    time: "Saturday · 1:00 PM",
+    accent: "from-cyan-400/25 via-blue-500/10 to-transparent",
+    badge: "border-cyan-200/20 bg-cyan-300/10 text-cyan-100",
+  },
+  {
+    dateTime: "2026-11-28T10:00:00",
+    date: "NOV 28",
+    category: "Youth",
+    title: "Little Neighbors, Big Ideas",
+    description:
+      "Help young people turn their ideas for a kinder neighborhood into a shared project.",
+    location: "Northside Youth Center",
+    time: "Saturday · 10:00 AM",
+    accent: "from-violet-400/25 via-fuchsia-500/10 to-transparent",
+    badge: "border-violet-200/20 bg-violet-300/10 text-violet-100",
+  },
+  {
+    dateTime: "2026-12-05T10:30:00",
+    date: "DEC 05",
+    category: "Community care",
+    title: "Winter Warmth Drive",
+    description:
+      "Sort donated essentials and help neighbors get ready for colder days.",
+    location: "Cedar Park Neighbors Center",
+    time: "Saturday · 10:30 AM",
+    accent: "from-sky-400/25 via-indigo-500/10 to-transparent",
+    badge: "border-sky-200/20 bg-sky-300/10 text-sky-100",
+  },
+  {
+    dateTime: "2026-12-12T08:30:00",
+    date: "DEC 12",
+    category: "Nature",
+    title: "Creekside Cleanup",
+    description:
+      "Spend a morning caring for a local walking trail and the wildlife around it.",
+    location: "Willow Creek Trail",
+    time: "Saturday · 8:30 AM",
+    accent: "from-lime-400/25 via-emerald-500/10 to-transparent",
+    badge: "border-lime-200/20 bg-lime-300/10 text-lime-100",
+  },
+];
+
 export default function Home() {
   const [notice, setNotice] = useState("");
 
@@ -256,6 +331,83 @@ export default function Home() {
               </div>
             ))}
           </dl>
+        </div>
+      </section>
+
+      <section
+        id="upcoming-events"
+        aria-labelledby="upcoming-events-heading"
+        className="scroll-mt-24 bg-[#15111f] px-5 py-16 text-white sm:px-8 sm:py-20"
+      >
+        <div className="mx-auto max-w-6xl">
+          <div className="mb-9 flex flex-col gap-3 sm:mb-10 sm:flex-row sm:items-end sm:justify-between">
+            <div className="max-w-2xl">
+              <p className="bg-gradient-to-r from-cyan-300 via-fuchsia-300 to-violet-300 bg-clip-text text-xs font-semibold uppercase tracking-[0.22em] text-transparent sm:text-sm">
+                Make a little time for good
+              </p>
+              <h2
+                id="upcoming-events-heading"
+                className="mt-3 text-3xl font-extrabold tracking-tight sm:text-4xl"
+              >
+                Upcoming{" "}
+                <span className="bg-gradient-to-r from-violet-300 via-fuchsia-300 to-cyan-300 bg-clip-text text-transparent">
+                  events
+                </span>
+              </h2>
+              <p className="mt-3 text-sm leading-6 text-white/65 sm:text-base">
+                A few ways to connect, lend a hand, and make your neighborhood
+                feel a little closer.
+              </p>
+            </div>
+            <span className="w-fit rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-white/60">
+              Sample events · UI preview
+            </span>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {upcomingEvents.map((event) => (
+              <article
+                key={event.title}
+                className={`group overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br ${event.accent} p-px transition duration-300 hover:-translate-y-1 hover:border-white/20`}
+              >
+                <div className="flex h-full flex-col rounded-[15px] bg-[#171421]/95 p-5 sm:p-6">
+                  <div className="flex items-center justify-between gap-3">
+                    <span
+                      className={`rounded-full border px-3 py-1 text-[0.65rem] font-semibold tracking-wide ${event.badge}`}
+                    >
+                      {event.category}
+                    </span>
+                    <time
+                      dateTime={event.dateTime}
+                      className="text-xs font-bold tracking-[0.12em] text-white/75"
+                    >
+                      {event.date}
+                    </time>
+                  </div>
+                  <h3 className="mt-5 text-lg font-bold tracking-tight text-white sm:text-xl">
+                    {event.title}
+                  </h3>
+                  <p className="mt-2 flex-1 text-sm leading-6 text-white/65">
+                    {event.description}
+                  </p>
+                  <div className="mt-5 space-y-2 border-t border-white/10 pt-4 text-xs text-white/65">
+                    <p className="flex items-center gap-2">
+                      <span aria-hidden="true" className="text-fuchsia-200">
+                        ◆
+                      </span>
+                      {event.location}
+                    </p>
+                    <p className="flex items-center gap-2">
+                      <span aria-hidden="true" className="text-cyan-200">
+                        ◷
+                      </span>
+                      {event.time}
+                    </p>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
         </div>
       </section>
 
