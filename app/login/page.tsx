@@ -1,15 +1,21 @@
 "use client";
 
 import Link from "next/link";
-import { useState, type FormEvent } from "react";
+import { useCallback, useState, type FormEvent } from "react";
+import AuthToast, { type AuthToastMessage } from "@/components/auth-toast";
 
 export default function LoginPage() {
   const [passwordVisible, setPasswordVisible] = useState(false);
-  const [notice, setNotice] = useState("");
+  const [toast, setToast] = useState<AuthToastMessage | null>(null);
+  const dismissToast = useCallback(() => setToast(null), []);
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setNotice("Sign-in is not connected yet. Your details have not been sent.");
+    setToast({
+      type: "success",
+      message:
+        "Login form validated. Authentication is not connected, so no account session was created.",
+    });
   }
 
   return (
@@ -63,7 +69,10 @@ export default function LoginPage() {
             <button
               type="button"
               onClick={() =>
-                setNotice("Google sign-in is not connected yet.")
+                setToast({
+                  type: "info",
+                  message: "Google sign-in is not connected yet.",
+                })
               }
               className="flex min-h-12 w-full items-center justify-center gap-3 rounded-xl border border-white/15 bg-white/[0.04] px-4 py-3 text-sm font-semibold text-white transition hover:border-white/30 hover:bg-white/[0.08] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300"
             >
@@ -154,16 +163,6 @@ export default function LoginPage() {
               </button>
             </form>
 
-            {notice && (
-              <p
-                role="status"
-                aria-live="polite"
-                className="mt-4 rounded-xl border border-amber-300/20 bg-amber-300/[0.08] px-4 py-3 text-sm leading-5 text-amber-100/90"
-              >
-                {notice}
-              </p>
-            )}
-
             <p className="mt-7 text-center text-sm text-white/55">
               Don&apos;t have an account?{" "}
               <Link
@@ -176,6 +175,7 @@ export default function LoginPage() {
           </div>
         </section>
       </div>
+      <AuthToast toast={toast} onDismiss={dismissToast} />
     </main>
   );
 }
