@@ -258,6 +258,90 @@ export default function Home() {
           </dl>
         </div>
       </section>
+
+      <section
+        aria-labelledby="features-heading"
+        className="bg-[#100d19] px-5 py-16 text-white sm:px-8 sm:py-20"
+      >
+        <div className="mx-auto max-w-6xl">
+          <div className="mx-auto max-w-2xl text-center">
+            <p className="bg-gradient-to-r from-cyan-300 via-fuchsia-300 to-violet-300 bg-clip-text text-xs font-semibold uppercase tracking-[0.22em] text-transparent sm:text-sm">
+              Good things start together
+            </p>
+            <h2
+              id="features-heading"
+              className="mt-3 text-3xl font-extrabold tracking-tight sm:text-4xl"
+            >
+              A little help goes{" "}
+              <span className="bg-gradient-to-r from-violet-300 via-fuchsia-300 to-cyan-300 bg-clip-text text-transparent">
+                a long way
+              </span>
+            </h2>
+            <p className="mt-4 text-sm leading-6 text-white/65 sm:text-base">
+              Simple ways to find your people, share an idea, and make a
+              difference close to home.
+            </p>
+          </div>
+
+          <div className="mt-10 grid gap-4 md:grid-cols-3">
+            <article className="group rounded-2xl border border-white/10 bg-gradient-to-br from-violet-500/10 to-transparent p-6 transition hover:-translate-y-1 hover:border-violet-300/30 sm:p-7">
+              <span className="flex size-11 items-center justify-center rounded-xl border border-violet-300/20 bg-violet-400/10 text-violet-200">
+                <svg
+                  aria-hidden="true"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  className="size-5"
+                >
+                  <circle cx="10.8" cy="10.8" r="6.8" stroke="currentColor" strokeWidth="1.7" />
+                  <path d="m16 16 4.2 4.2M8 10.8h5.6m-2.8-2.8v5.6" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+                </svg>
+              </span>
+              <h3 className="mt-5 text-lg font-bold">Find your next way to help</h3>
+              <p className="mt-2 text-sm leading-6 text-white/65">
+                Explore community gatherings and discover causes that feel
+                close to you.
+              </p>
+            </article>
+
+            <article className="group rounded-2xl border border-white/10 bg-gradient-to-br from-fuchsia-500/10 to-transparent p-6 transition hover:-translate-y-1 hover:border-fuchsia-300/30 sm:p-7">
+              <span className="flex size-11 items-center justify-center rounded-xl border border-fuchsia-300/20 bg-fuchsia-400/10 text-fuchsia-200">
+                <svg
+                  aria-hidden="true"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  className="size-5"
+                >
+                  <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                  <rect x="3.5" y="3.5" width="17" height="17" rx="5" stroke="currentColor" strokeWidth="1.5" />
+                </svg>
+              </span>
+              <h3 className="mt-5 text-lg font-bold">Bring an idea to life</h3>
+              <p className="mt-2 text-sm leading-6 text-white/65">
+                Shape a local get-together around a shared interest, skill, or
+                community need.
+              </p>
+            </article>
+
+            <article className="group rounded-2xl border border-white/10 bg-gradient-to-br from-cyan-500/10 to-transparent p-6 transition hover:-translate-y-1 hover:border-cyan-300/30 sm:p-7">
+              <span className="flex size-11 items-center justify-center rounded-xl border border-cyan-300/20 bg-cyan-400/10 text-cyan-200">
+                <svg
+                  aria-hidden="true"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  className="size-5"
+                >
+                  <path d="M16 20v-1.6a3.4 3.4 0 0 0-3.4-3.4H6.4A3.4 3.4 0 0 0 3 18.4V20m6.5-9a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Zm6-6.7a3.5 3.5 0 0 1 0 6.8m2 3.9h.1a3.4 3.4 0 0 1 3.4 3.4V20" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </span>
+              <h3 className="mt-5 text-lg font-bold">Make it better together</h3>
+              <p className="mt-2 text-sm leading-6 text-white/65">
+                Meet neighbors who care, share what you can, and turn small
+                acts into lasting connections.
+              </p>
+            </article>
+          </div>
+        </div>
+      </section>
     </main>
   );
 }

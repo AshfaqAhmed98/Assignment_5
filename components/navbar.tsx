@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { useState } from "react";
 import BrandLogo from "@/components/brand-logo";
 
 type NavbarUser = {
@@ -15,6 +16,7 @@ type NavbarProps =
   | { user?: null; onLogout?: never };
 
 export default function Navbar({ user = null, onLogout }: NavbarProps) {
+  const [showEventsNotice, setShowEventsNotice] = useState(false);
   const initials =
     user?.displayName
       .split(" ")
@@ -33,6 +35,41 @@ export default function Navbar({ user = null, onLogout }: NavbarProps) {
         >
           <BrandLogo className="w-36 max-[360px]:w-28 sm:w-44 lg:w-48" />
         </Link>
+
+        <nav
+          aria-label="Main navigation"
+          className="absolute left-1/2 hidden -translate-x-1/2 items-center rounded-full border border-white/[0.08] bg-white/[0.045] p-1 md:flex"
+        >
+          <button
+            type="button"
+            onClick={() => setShowEventsNotice((visible) => !visible)}
+            className="group flex items-center gap-2 whitespace-nowrap rounded-full px-5 py-2.5 text-sm font-semibold text-white/70 transition hover:bg-gradient-to-r hover:from-violet-500/25 hover:via-fuchsia-500/20 hover:to-cyan-400/20 hover:text-white"
+          >
+            <svg
+              aria-hidden="true"
+              viewBox="0 0 24 24"
+              fill="none"
+              className="size-[17px] transition-colors group-hover:text-cyan-200"
+            >
+              <rect
+                x="3.5"
+                y="5"
+                width="17"
+                height="15.5"
+                rx="2.5"
+                stroke="currentColor"
+                strokeWidth="1.7"
+              />
+              <path
+                d="M7.5 3.5v3M16.5 3.5v3M3.5 9.5h17"
+                stroke="currentColor"
+                strokeWidth="1.7"
+                strokeLinecap="round"
+              />
+            </svg>
+            Upcoming Events
+          </button>
+        </nav>
 
         <div className="ml-auto flex items-center gap-2 sm:gap-3">
           {user ? (
@@ -105,6 +142,49 @@ export default function Navbar({ user = null, onLogout }: NavbarProps) {
           )}
         </div>
       </div>
+
+      <nav
+        aria-label="Mobile navigation"
+        className="border-t border-white/[0.07] px-4 py-1.5 md:hidden"
+      >
+        <button
+          type="button"
+          onClick={() => setShowEventsNotice((visible) => !visible)}
+          className="mx-auto flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-semibold text-white/75 transition hover:bg-white/10 hover:text-white"
+        >
+          <svg
+            aria-hidden="true"
+            viewBox="0 0 24 24"
+            fill="none"
+            className="size-4"
+          >
+            <rect
+              x="3.5"
+              y="5"
+              width="17"
+              height="15.5"
+              rx="2.5"
+              stroke="currentColor"
+              strokeWidth="1.7"
+            />
+            <path
+              d="M7.5 3.5v3M16.5 3.5v3M3.5 9.5h17"
+              stroke="currentColor"
+              strokeWidth="1.7"
+              strokeLinecap="round"
+            />
+          </svg>
+          Upcoming Events
+        </button>
+      </nav>
+      {showEventsNotice && (
+        <p
+          role="status"
+          className="absolute left-1/2 top-full z-50 mt-2 -translate-x-1/2 whitespace-nowrap rounded-full border border-white/15 bg-[#211a34] px-4 py-2 text-xs font-medium text-white shadow-xl"
+        >
+          Upcoming events are coming soon.
+        </p>
+      )}
     </header>
   );
 }
