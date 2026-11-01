@@ -12,6 +12,47 @@
     position: relative;
   }
 
+  .banner-color-overlay {
+    background-image:
+      radial-gradient(
+        ellipse at 14% 12%,
+        rgb(124 58 237 / 54%),
+        transparent 52%
+      ),
+      radial-gradient(
+        ellipse at 86% 16%,
+        rgb(219 39 119 / 48%),
+        transparent 54%
+      ),
+      radial-gradient(
+        ellipse at 52% 100%,
+        rgb(34 211 238 / 22%),
+        transparent 58%
+      ),
+      linear-gradient(
+        110deg,
+        rgb(30 17 48 / 48%) 0%,
+        rgb(39 22 49 / 38%) 48%,
+        rgb(44 17 46 / 50%) 100%
+      );
+  }
+
+  .banner-background {
+    animation: banner-background-enter 500ms ease-out both;
+  }
+
+  @keyframes banner-background-enter {
+    from {
+      opacity: 0.65;
+      transform: scale(1.025);
+    }
+
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
   .navbar-gradient::after {
     background: linear-gradient(
       90deg,
