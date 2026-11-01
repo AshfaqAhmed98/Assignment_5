@@ -1,6 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { useEffect, useState } from "react";
+
+type CreatedEvent = {
+  id: string;
+  title: string;
+  description: string;
+  type: string;
+  thumbnailUrl: string;
+  location: string;
+  eventDate: string;
+};
 
 const banner = {
   background: "/community-events-background.jpg",
@@ -115,7 +127,77 @@ const upcomingEvents = [
 ];
 
 export default function Home() {
-  const [notice, setNotice] = useState("");
+  const [createdEvents, setCreatedEvents] = useState<CreatedEvent[]>([]);
+  const [eventsError, setEventsError] = useState("");
+
+  useEffect(() => {
+    let isMounted = true;
+    const controller = new AbortController();
+
+    async function loadEvents() {
+      try {
+        const response = await fetch("/api/events", {
+          signal: controller.signal,
+          cache: "no-store",
+        });
+        const result = (await response.json()) as {
+          error?: string;
+          events?: CreatedEvent[];
+        };
+
+        if (!response.ok) {
+          throw new Error(result.error ?? "Unable to load upcoming events.");
+        }
+
+        if (isMounted) {
+          setCreatedEvents(result.events ?? []);
+          setEventsError("");
+        }
+      } catch (error) {
+        if (isMounted && !controller.signal.aborted) {
+          setEventsError(
+            error instanceof Error
+              ? error.message
+              : "Unable to load upcoming events.",
+          );
+        }
+      }
+    }
+
+    void loadEvents();
+
+    return () => {
+      isMounted = false;
+      controller.abort();
+    };
+  }, []);
+
+  const displayedEvents = [
+    ...createdEvents.map((event) => {
+      const eventDate = new Date(event.eventDate);
+
+      return {
+        ...event,
+        dateTime: event.eventDate,
+        date: eventDate
+          .toLocaleDateString("en", { month: "short", day: "2-digit" })
+          .toUpperCase(),
+        category: event.type,
+        time: eventDate.toLocaleString("en", {
+          weekday: "long",
+          hour: "numeric",
+          minute: "2-digit",
+        }),
+        accent: "from-violet-400/25 via-fuchsia-500/10 to-transparent",
+        badge: "border-fuchsia-200/20 bg-fuchsia-300/10 text-fuchsia-100",
+      };
+    }),
+    ...upcomingEvents.map((event) => ({
+      ...event,
+      id: `sample:${event.title}`,
+      thumbnailUrl: "",
+    })),
+  ];
 
   return (
     <main className="flex-1 bg-[#1a1424] text-white">
@@ -268,11 +350,8 @@ export default function Home() {
             {banner.description}
           </p>
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <button
-              type="button"
-              onClick={() =>
-                setNotice("Upcoming events will be available soon.")
-              }
+            <Link
+              href="#upcoming-events"
               className="inline-flex min-h-12 items-center justify-center gap-2.5 rounded-full border border-white/30 bg-gradient-to-r from-violet-600 via-fuchsia-500 to-rose-500 px-7 py-3 text-sm font-bold text-white shadow-[0_8px_28px_rgba(124,58,237,0.4)] transition hover:-translate-y-0.5 hover:brightness-110 hover:shadow-[0_12px_34px_rgba(219,39,119,0.5)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cyan-200"
             >
               Explore Upcoming Events
@@ -290,21 +369,14 @@ export default function Home() {
                   strokeLinejoin="round"
                 />
               </svg>
-            </button>
-            <button
-              type="button"
-              onClick={() => setNotice("Event creation will be available soon.")}
+            </Link>
+            <Link
+              href="/create-event"
               className="inline-flex min-h-12 items-center justify-center rounded-full border border-white/55 bg-white/10 px-7 py-3 text-sm font-bold text-white shadow-[0_6px_24px_rgba(20,10,32,0.24)] backdrop-blur-md transition hover:-translate-y-0.5 hover:border-cyan-200/80 hover:bg-white/20 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cyan-200"
             >
               Create Event
-            </button>
+            </Link>
           </div>
-          <p
-            aria-live="polite"
-            className="mt-3 min-h-5 text-sm font-medium text-cyan-100"
-          >
-            {notice}
-          </p>
           <dl
             aria-label="Community event highlights"
             className="mx-auto mt-5 grid w-full max-w-3xl grid-cols-3 overflow-hidden rounded-xl border border-white/15 bg-[#111019]/75 px-1.5 py-2 shadow-[0_12px_35px_rgba(0,0,0,0.28)] backdrop-blur-xl sm:mt-6 sm:grid-cols-5 sm:rounded-full sm:px-2"
@@ -360,17 +432,38 @@ export default function Home() {
               </p>
             </div>
             <span className="w-fit rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-white/60">
-              Sample events · UI preview
+              Community events
             </span>
           </div>
 
+          {eventsError && (
+            <p
+              role="status"
+              className="mb-5 rounded-xl border border-amber-200/20 bg-amber-300/5 px-4 py-3 text-sm text-amber-100"
+            >
+              {eventsError} Showing sample events instead.
+            </p>
+          )}
+
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {upcomingEvents.map((event) => (
+            {displayedEvents.map((event) => (
               <article
-                key={event.title}
+                key={event.id}
                 className={`group overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br ${event.accent} p-px transition duration-300 hover:-translate-y-1 hover:border-white/20`}
               >
                 <div className="flex h-full flex-col rounded-[15px] bg-[#171421]/95 p-5 sm:p-6">
+                  {event.thumbnailUrl && (
+                    <div className="relative mb-4 aspect-[16/9] overflow-hidden rounded-xl border border-white/10 bg-white/5">
+                      <Image
+                        src={event.thumbnailUrl}
+                        alt=""
+                        fill
+                        unoptimized
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                        className="object-cover"
+                      />
+                    </div>
+                  )}
                   <div className="flex items-center justify-between gap-3">
                     <span
                       className={`rounded-full border px-3 py-1 text-[0.65rem] font-semibold tracking-wide ${event.badge}`}
