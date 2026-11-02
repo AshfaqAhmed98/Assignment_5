@@ -29,13 +29,13 @@ export const frontendOrigins = (process.env.FRONTEND_ORIGIN ?? "http://localhost
   .filter(Boolean);
 
 const mongoUri = requireEnvironment(
-  "MONGODB_URI",
-  process.env.MONGODB_URI,
+  "DATABASE_URL",
+  process.env.DATABASE_URL ?? process.env.MONGODB_URI,
 );
-const databaseName = requireEnvironment(
-  "MONGODB_DATABASE",
-  process.env.MONGODB_DATABASE,
-);
+const databaseName =
+  process.env.MONGODB_DATABASE ||
+  decodeURIComponent(new URL(mongoUri).pathname.slice(1)) ||
+  "eventmatrix";
 export const mongoClient = new MongoClient(mongoUri);
 const database = mongoClient.db(databaseName);
 export const eventsCollection = database.collection<EventRecord>("events");

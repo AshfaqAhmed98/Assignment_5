@@ -1,8 +1,40 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import EventCard, { type PublicEvent } from "@/components/event-card";
+
+const galleryPhotos = [
+  {
+    src: "/gallery-cleanup.jpg",
+    alt: "Volunteers working together on a community project",
+    caption: "Community cleanups",
+    placement:
+      "col-start-1 row-start-1 aspect-[1.4/1] lg:absolute lg:left-0 lg:top-[56px] lg:h-[190px] lg:w-[59%] lg:aspect-auto",
+  },
+  {
+    src: "/gallery-neighbors.jpg",
+    alt: "Community members volunteering together outdoors",
+    caption: "Neighbors helping neighbors",
+    placement:
+      "col-start-2 row-start-1 aspect-[0.72/1] lg:absolute lg:right-0 lg:top-0 lg:h-[236px] lg:w-[38%] lg:aspect-auto",
+  },
+  {
+    src: "/gallery-gathering.jpg",
+    alt: "A group of volunteers gathering for a community event",
+    caption: "Community gatherings",
+    placement:
+      "col-start-1 row-start-2 aspect-[0.72/1] lg:absolute lg:bottom-0 lg:left-0 lg:h-[236px] lg:w-[38%] lg:aspect-auto",
+  },
+  {
+    src: "/gallery-volunteers.jpg",
+    alt: "Volunteers working together to support a local cause",
+    caption: "Hands ready to help",
+    placement:
+      "col-start-2 row-start-2 aspect-[1.4/1] lg:absolute lg:right-0 lg:bottom-[52px] lg:h-[190px] lg:w-[59%] lg:aspect-auto",
+  },
+];
 
 const banner = {
   background: "/community-events-background.jpg",
@@ -298,6 +330,177 @@ export default function Home() {
       </section>
 
       <section
+        aria-labelledby="features-heading"
+        className="bg-[#100d19] px-5 py-16 text-white sm:px-8 sm:py-20"
+      >
+        <div className="mx-auto max-w-6xl">
+          <div className="mx-auto max-w-2xl text-center">
+            <p className="bg-gradient-to-r from-cyan-300 via-fuchsia-300 to-violet-300 bg-clip-text text-xs font-semibold uppercase tracking-[0.22em] text-transparent sm:text-sm">
+              Good things start together
+            </p>
+            <h2
+              id="features-heading"
+              className="mt-3 text-3xl font-extrabold tracking-tight sm:text-4xl"
+            >
+              A little help goes{" "}
+              <span className="bg-gradient-to-r from-violet-300 via-fuchsia-300 to-cyan-300 bg-clip-text text-transparent">
+                a long way
+              </span>
+            </h2>
+            <p className="mt-4 text-sm leading-6 text-white/65 sm:text-base">
+              Simple ways to find your people, share an idea, and make a
+              difference close to home.
+            </p>
+          </div>
+
+          <div className="mt-10 grid gap-4 md:grid-cols-3">
+            <article className="group rounded-2xl border border-white/10 bg-gradient-to-br from-violet-500/10 to-transparent p-6 transition hover:-translate-y-1 hover:border-violet-300/30 sm:p-7">
+              <span className="relative flex size-12 items-center justify-center rounded-xl border border-violet-300/25 bg-violet-400/10 text-violet-200 shadow-[0_0_18px_rgba(167,139,250,0.08)] transition duration-300 group-hover:border-violet-200/50 group-hover:bg-violet-400/20 group-hover:text-violet-100 group-hover:shadow-[0_0_28px_rgba(167,139,250,0.28)] group-focus-within:border-violet-200/50 group-focus-within:bg-violet-400/20 group-focus-within:text-violet-100 motion-safe:group-hover:-translate-y-1 motion-safe:group-hover:rotate-3 motion-safe:group-hover:scale-110">
+                <svg
+                  aria-hidden="true"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  className="size-5 transition-transform duration-500 motion-safe:group-hover:rotate-[-12deg] motion-safe:group-hover:scale-110"
+                >
+                  <circle cx="10.8" cy="10.8" r="6.8" stroke="currentColor" strokeWidth="1.7" />
+                  <path d="m16 16 4.2 4.2M8 10.8h5.6m-2.8-2.8v5.6" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+                </svg>
+              </span>
+              <h3 className="mt-5 text-lg font-bold">Find your next way to help</h3>
+              <p className="mt-2 text-sm leading-6 text-white/65">
+                Explore community gatherings and discover causes that feel
+                close to you.
+              </p>
+            </article>
+
+            <article className="group rounded-2xl border border-white/10 bg-gradient-to-br from-fuchsia-500/10 to-transparent p-6 transition hover:-translate-y-1 hover:border-fuchsia-300/30 sm:p-7">
+              <span className="relative flex size-12 items-center justify-center rounded-xl border border-fuchsia-300/25 bg-fuchsia-400/10 text-fuchsia-200 shadow-[0_0_18px_rgba(232,121,249,0.08)] transition duration-300 group-hover:border-fuchsia-200/50 group-hover:bg-fuchsia-400/20 group-hover:text-fuchsia-100 group-hover:shadow-[0_0_28px_rgba(232,121,249,0.28)] group-focus-within:border-fuchsia-200/50 group-focus-within:bg-fuchsia-400/20 group-focus-within:text-fuchsia-100 motion-safe:group-hover:-translate-y-1 motion-safe:group-hover:rotate-3 motion-safe:group-hover:scale-110">
+                <svg
+                  aria-hidden="true"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  className="size-5 transition-transform duration-500 motion-safe:group-hover:rotate-90 motion-safe:group-hover:scale-110"
+                >
+                  <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                  <rect x="3.5" y="3.5" width="17" height="17" rx="5" stroke="currentColor" strokeWidth="1.5" />
+                </svg>
+              </span>
+              <h3 className="mt-5 text-lg font-bold">Bring an idea to life</h3>
+              <p className="mt-2 text-sm leading-6 text-white/65">
+                Shape a local get-together around a shared interest, skill, or
+                community need.
+              </p>
+            </article>
+
+            <article className="group rounded-2xl border border-white/10 bg-gradient-to-br from-cyan-500/10 to-transparent p-6 transition hover:-translate-y-1 hover:border-cyan-300/30 sm:p-7">
+              <span className="relative flex size-12 items-center justify-center rounded-xl border border-cyan-300/25 bg-cyan-400/10 text-cyan-200 shadow-[0_0_18px_rgba(103,232,249,0.08)] transition duration-300 group-hover:border-cyan-200/50 group-hover:bg-cyan-400/20 group-hover:text-cyan-100 group-hover:shadow-[0_0_28px_rgba(103,232,249,0.28)] group-focus-within:border-cyan-200/50 group-focus-within:bg-cyan-400/20 group-focus-within:text-cyan-100 motion-safe:group-hover:-translate-y-1 motion-safe:group-hover:-rotate-3 motion-safe:group-hover:scale-110">
+                <svg
+                  aria-hidden="true"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  className="size-5 transition-transform duration-500 motion-safe:group-hover:scale-125"
+                >
+                  <path d="M16 20v-1.6a3.4 3.4 0 0 0-3.4-3.4H6.4A3.4 3.4 0 0 0 3 18.4V20m6.5-9a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Zm6-6.7a3.5 3.5 0 0 1 0 6.8m2 3.9h.1a3.4 3.4 0 0 1 3.4 3.4V20" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </span>
+              <h3 className="mt-5 text-lg font-bold">Make it better together</h3>
+              <p className="mt-2 text-sm leading-6 text-white/65">
+                Meet neighbors who care, share what you can, and turn small
+                acts into lasting connections.
+              </p>
+            </article>
+
+            <article className="group rounded-2xl border border-white/10 bg-gradient-to-br from-emerald-500/10 to-transparent p-6 transition hover:-translate-y-1 hover:border-emerald-300/30 sm:p-7">
+              <span className="relative flex size-12 items-center justify-center rounded-xl border border-emerald-300/25 bg-emerald-400/10 text-emerald-200 shadow-[0_0_18px_rgba(110,231,183,0.08)] transition duration-300 group-hover:border-emerald-200/50 group-hover:bg-emerald-400/20 group-hover:text-emerald-100 group-hover:shadow-[0_0_28px_rgba(110,231,183,0.28)] group-focus-within:border-emerald-200/50 group-focus-within:bg-emerald-400/20 group-focus-within:text-emerald-100 motion-safe:group-hover:-translate-y-1 motion-safe:group-hover:rotate-3 motion-safe:group-hover:scale-110">
+                <svg
+                  aria-hidden="true"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  className="size-5 transition-transform duration-500 motion-safe:group-hover:-rotate-12 motion-safe:group-hover:scale-110"
+                >
+                  <path
+                    d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10Z"
+                    stroke="currentColor"
+                    strokeWidth="1.7"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d="M8.5 12h2l1.2-2.3 1.6 4.6 1.1-2.3h1.1"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </span>
+              <h3 className="mt-5 text-lg font-bold">Support a cause you care about</h3>
+              <p className="mt-2 text-sm leading-6 text-white/65">
+                Give your time to local causes and help make meaningful
+                progress where it matters most.
+              </p>
+            </article>
+
+            <article className="group rounded-2xl border border-white/10 bg-gradient-to-br from-amber-500/10 to-transparent p-6 transition hover:-translate-y-1 hover:border-amber-300/30 sm:p-7">
+              <span className="relative flex size-12 items-center justify-center rounded-xl border border-amber-300/25 bg-amber-400/10 text-amber-200 shadow-[0_0_18px_rgba(252,211,77,0.08)] transition duration-300 group-hover:border-amber-200/50 group-hover:bg-amber-400/20 group-hover:text-amber-100 group-hover:shadow-[0_0_28px_rgba(252,211,77,0.28)] group-focus-within:border-amber-200/50 group-focus-within:bg-amber-400/20 group-focus-within:text-amber-100 motion-safe:group-hover:-translate-y-1 motion-safe:group-hover:-rotate-3 motion-safe:group-hover:scale-110">
+                <svg
+                  aria-hidden="true"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  className="size-5 transition-transform duration-500 motion-safe:group-hover:rotate-12 motion-safe:group-hover:scale-110"
+                >
+                  <path
+                    d="m12 3 2.2 5.1 5.5.5-4.2 3.6 1.3 5.4-4.8-2.9-4.8 2.9 1.3-5.4-4.2-3.6 5.5-.5L12 3Z"
+                    stroke="currentColor"
+                    strokeWidth="1.6"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d="m19 16 .8 1.8 1.7.7-1.7.7L19 21l-.7-1.8-1.8-.7 1.8-.7L19 16Z"
+                    fill="currentColor"
+                  />
+                </svg>
+              </span>
+              <h3 className="mt-5 text-lg font-bold">Celebrate the impact</h3>
+              <p className="mt-2 text-sm leading-6 text-white/65">
+                Share what your community accomplishes and inspire more people
+                to get involved.
+              </p>
+            </article>
+
+            <article className="group rounded-2xl border border-white/10 bg-gradient-to-br from-blue-500/10 to-transparent p-6 transition hover:-translate-y-1 hover:border-blue-300/30 sm:p-7">
+              <span className="relative flex size-12 items-center justify-center rounded-xl border border-blue-300/25 bg-blue-400/10 text-blue-200 shadow-[0_0_18px_rgba(147,197,253,0.08)] transition duration-300 group-hover:border-blue-200/50 group-hover:bg-blue-400/20 group-hover:text-blue-100 group-hover:shadow-[0_0_28px_rgba(147,197,253,0.28)] group-focus-within:border-blue-200/50 group-focus-within:bg-blue-400/20 group-focus-within:text-blue-100 motion-safe:group-hover:-translate-y-1 motion-safe:group-hover:rotate-3 motion-safe:group-hover:scale-110">
+                <svg
+                  aria-hidden="true"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  className="size-5 transition-transform duration-500 motion-safe:group-hover:-rotate-6 motion-safe:group-hover:scale-110"
+                >
+                  <path
+                    d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"
+                    stroke="currentColor"
+                    strokeWidth="1.7"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d="M8 7h8m-8 4h6"
+                    stroke="currentColor"
+                    strokeWidth="1.6"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </span>
+              <h3 className="mt-5 text-lg font-bold">Learn and share new skills</h3>
+              <p className="mt-2 text-sm leading-6 text-white/65">
+                Join hands-on workshops, exchange ideas, and bring fresh skills
+                back to your neighborhood.
+              </p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section
         id="upcoming-events"
         aria-labelledby="upcoming-events-heading"
         className="scroll-mt-24 bg-[#15111f] px-5 py-16 text-white sm:px-8 sm:py-20"
@@ -367,86 +570,78 @@ export default function Home() {
       </section>
 
       <section
-        aria-labelledby="features-heading"
-        className="bg-[#100d19] px-5 py-16 text-white sm:px-8 sm:py-20"
+        aria-labelledby="gallery-heading"
+        className="overflow-hidden bg-[#15111f] px-5 py-16 text-white sm:px-8 sm:py-20"
       >
-        <div className="mx-auto max-w-6xl">
-          <div className="mx-auto max-w-2xl text-center">
+        <div className="mx-auto grid max-w-6xl items-center gap-10 lg:grid-cols-[0.88fr_1.12fr] lg:gap-16">
+          <div className="mx-auto max-w-xl lg:mx-0">
             <p className="bg-gradient-to-r from-cyan-300 via-fuchsia-300 to-violet-300 bg-clip-text text-xs font-semibold uppercase tracking-[0.22em] text-transparent sm:text-sm">
-              Good things start together
+              Neighbors making a difference
             </p>
             <h2
-              id="features-heading"
-              className="mt-3 text-3xl font-extrabold tracking-tight sm:text-4xl"
+              id="gallery-heading"
+              className="mt-4 text-3xl font-extrabold tracking-tight text-white sm:text-4xl"
             >
-              A little help goes{" "}
-              <span className="bg-gradient-to-r from-violet-300 via-fuchsia-300 to-cyan-300 bg-clip-text text-transparent">
-                a long way
-              </span>
+              Moments that bring our community together
             </h2>
-            <p className="mt-4 text-sm leading-6 text-white/65 sm:text-base">
-              Simple ways to find your people, share an idea, and make a
-              difference close to home.
+            <span
+              aria-hidden="true"
+              className="mt-5 block h-1 w-14 rounded-full bg-gradient-to-r from-violet-500 via-fuchsia-500 to-cyan-400"
+            />
+            <p className="mt-6 text-sm leading-7 text-white/65 sm:text-base">
+              Every neighborhood has people who care enough to roll up their
+              sleeves. From shared cleanups to local gatherings, these are the
+              small moments that make a lasting difference.
+            </p>
+            <p className="mt-4 text-sm leading-7 text-white/65 sm:text-base">
+              Find a cause that feels close to home, meet the people behind it,
+              and help create the next story worth sharing.
             </p>
           </div>
 
-          <div className="mt-10 grid gap-4 md:grid-cols-3">
-            <article className="group rounded-2xl border border-white/10 bg-gradient-to-br from-violet-500/10 to-transparent p-6 transition hover:-translate-y-1 hover:border-violet-300/30 sm:p-7">
-              <span className="flex size-11 items-center justify-center rounded-xl border border-violet-300/20 bg-violet-400/10 text-violet-200">
-                <svg
+          <div className="relative grid grid-cols-2 gap-3 sm:gap-4 lg:block lg:h-[500px]">
+            {galleryPhotos.map((photo) => (
+              <figure
+                key={photo.src}
+                className={`group relative isolate overflow-hidden rounded-2xl border border-white/10 bg-[#211b30] shadow-[0_12px_30px_rgba(0,0,0,0.25)] ${photo.placement}`}
+              >
+                <Image
+                  src={photo.src}
+                  alt={photo.alt}
+                  fill
+                  unoptimized
+                  sizes="(max-width: 640px) 50vw, (max-width: 1024px) 40vw, 30vw"
+                  className="object-cover transition duration-500 group-hover:scale-105"
+                />
+                <div
                   aria-hidden="true"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  className="size-5"
-                >
-                  <circle cx="10.8" cy="10.8" r="6.8" stroke="currentColor" strokeWidth="1.7" />
-                  <path d="m16 16 4.2 4.2M8 10.8h5.6m-2.8-2.8v5.6" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
-                </svg>
-              </span>
-              <h3 className="mt-5 text-lg font-bold">Find your next way to help</h3>
-              <p className="mt-2 text-sm leading-6 text-white/65">
-                Explore community gatherings and discover causes that feel
-                close to you.
-              </p>
-            </article>
-
-            <article className="group rounded-2xl border border-white/10 bg-gradient-to-br from-fuchsia-500/10 to-transparent p-6 transition hover:-translate-y-1 hover:border-fuchsia-300/30 sm:p-7">
-              <span className="flex size-11 items-center justify-center rounded-xl border border-fuchsia-300/20 bg-fuchsia-400/10 text-fuchsia-200">
-                <svg
-                  aria-hidden="true"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  className="size-5"
-                >
-                  <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-                  <rect x="3.5" y="3.5" width="17" height="17" rx="5" stroke="currentColor" strokeWidth="1.5" />
-                </svg>
-              </span>
-              <h3 className="mt-5 text-lg font-bold">Bring an idea to life</h3>
-              <p className="mt-2 text-sm leading-6 text-white/65">
-                Shape a local get-together around a shared interest, skill, or
-                community need.
-              </p>
-            </article>
-
-            <article className="group rounded-2xl border border-white/10 bg-gradient-to-br from-cyan-500/10 to-transparent p-6 transition hover:-translate-y-1 hover:border-cyan-300/30 sm:p-7">
-              <span className="flex size-11 items-center justify-center rounded-xl border border-cyan-300/20 bg-cyan-400/10 text-cyan-200">
-                <svg
-                  aria-hidden="true"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  className="size-5"
-                >
-                  <path d="M16 20v-1.6a3.4 3.4 0 0 0-3.4-3.4H6.4A3.4 3.4 0 0 0 3 18.4V20m6.5-9a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Zm6-6.7a3.5 3.5 0 0 1 0 6.8m2 3.9h.1a3.4 3.4 0 0 1 3.4 3.4V20" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </span>
-              <h3 className="mt-5 text-lg font-bold">Make it better together</h3>
-              <p className="mt-2 text-sm leading-6 text-white/65">
-                Meet neighbors who care, share what you can, and turn small
-                acts into lasting connections.
-              </p>
-            </article>
+                  className="absolute inset-0 bg-gradient-to-t from-[#100d19]/75 via-transparent to-transparent opacity-80 transition group-hover:opacity-100"
+                />
+                <figcaption className="absolute inset-x-0 bottom-0 p-3 sm:p-4">
+                  <p className="text-xs font-bold text-white sm:text-sm">
+                    {photo.caption}
+                  </p>
+                </figcaption>
+              </figure>
+            ))}
+            <Link
+              href="/events"
+              className="col-start-2 row-start-3 inline-flex min-h-10 w-fit items-center justify-center rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 px-5 text-xs font-bold uppercase tracking-wide text-white transition hover:-translate-y-0.5 hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fuchsia-300 lg:absolute lg:bottom-0 lg:right-0"
+            >
+              View events
+            </Link>
           </div>
+          <p className="text-right text-xs text-white/40 lg:col-start-2">
+            Photos via{" "}
+            <a
+              href="https://unsplash.com"
+              target="_blank"
+              rel="noreferrer"
+              className="underline underline-offset-2 transition hover:text-fuchsia-200"
+            >
+              Unsplash
+            </a>
+          </p>
         </div>
       </section>
     </main>

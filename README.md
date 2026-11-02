@@ -16,9 +16,10 @@ Open [http://localhost:3000](http://localhost:3000) to view the app.
 Better Auth runs in a Next.js route at `http://localhost:3000/api/auth`, so the
 frontend and auth requests share one server and origin. Create a local
 `.env.local` from `.env.example` (`Copy-Item .env.example .env.local` in
-PowerShell), then set `MONGODB_URI` and `MONGODB_DATABASE`. The default URI
-targets a MongoDB server running locally at `127.0.0.1:27017`; for MongoDB
-Atlas, replace it with your Atlas connection string.
+PowerShell), then set `DATABASE_URL` to your MongoDB connection string. Include
+the database name in the URI path (for example, `mongodb://127.0.0.1:27017/eventmatrix`).
+For MongoDB Atlas, use the connection string provided by Atlas. Existing
+`MONGODB_URI` and `MONGODB_DATABASE` settings are still supported.
 
 Set `BETTER_AUTH_SECRET` to a random secret of at least 32 characters. For
 example, generate one with:
