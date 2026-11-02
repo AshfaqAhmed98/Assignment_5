@@ -11,6 +11,7 @@ import {
   type FormEvent,
 } from "react";
 import AuthToast, { type AuthToastMessage } from "@/components/auth-toast";
+import GoogleAuthButton from "@/components/google-auth-button";
 import { useAuth } from "@/lib/auth";
 
 type RegistrationForm = {
@@ -21,7 +22,7 @@ type RegistrationForm = {
 };
 
 export default function RegisterPage() {
-  const { register } = useAuth();
+  const { register, loginWithGoogle } = useAuth();
   const router = useRouter();
   const [form, setForm] = useState<RegistrationForm>({
     name: "",
@@ -38,6 +39,18 @@ export default function RegisterPage() {
   const [toast, setToast] = useState<AuthToastMessage | null>(null);
   const dismissToast = useCallback(() => setToast(null), []);
   const photoFileInputRef = useRef<HTMLInputElement>(null);
+
+  async function handleGoogleSignUp(credential: string) {
+    setIsSubmitting(true);
+    setToast(null);
+
+    try {
+      await loginWithGoogle(credential);
+      router.replace("/events");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
 
   function handlePhotoFileChange(event: ChangeEvent<HTMLInputElement>) {
     const file = event.currentTarget.files?.[0];
@@ -185,7 +198,21 @@ export default function RegisterPage() {
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} noValidate className="mt-6 space-y-4">
+        <GoogleAuthButton
+          action="signup"
+          disabled={isSubmitting}
+          onCredential={handleGoogleSignUp}
+          onError={(message) => setToast({ type: "error", message })}
+        />
+        <div className="my-5 flex items-center gap-4">
+          <span className="h-px flex-1 bg-white/10" />
+          <span className="text-xs font-medium uppercase tracking-[0.12em] text-white/35">
+            or with email
+          </span>
+          <span className="h-px flex-1 bg-white/10" />
+        </div>
+
+        <form onSubmit={handleSubmit} noValidate className="space-y-4">
           <div>
             <label
               htmlFor="name"

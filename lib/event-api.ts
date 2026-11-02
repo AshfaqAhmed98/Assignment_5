@@ -104,6 +104,144 @@ export async function getEvent(id: string) {
   return (body as { event: PublicEvent }).event;
 }
 
+export async function joinEvent(token: string, id: string) {
+  const response = await fetch(
+    `/backend/api/events/${encodeURIComponent(id)}/join`,
+    {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error(await getErrorMessage(response));
+  }
+
+  const body: unknown = await response.json();
+  if (
+    !body ||
+    typeof body !== "object" ||
+    !isPublicEvent((body as Record<string, unknown>).event)
+  ) {
+    throw new Error("The event service returned an invalid response.");
+  }
+
+  return (body as { event: PublicEvent }).event;
+}
+
+export async function getJoinedEvents(token: string, limit: number) {
+  const query = new URLSearchParams({
+    page: "1",
+    limit: String(limit),
+  });
+  const response = await fetch(`/backend/api/events/joined?${query}`, {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw new Error(await getErrorMessage(response));
+  }
+
+  const body: unknown = await response.json();
+  if (!body || typeof body !== "object") {
+    throw new Error("The event service returned an invalid response.");
+  }
+
+  const result = body as Record<string, unknown>;
+  const pagination = result.pagination;
+  if (
+    !Array.isArray(result.events) ||
+    !result.events.every(isPublicEvent) ||
+    !pagination ||
+    typeof pagination !== "object"
+  ) {
+    throw new Error("The event service returned an invalid response.");
+  }
+
+  return {
+    events: result.events,
+    pagination: pagination as EventListResponse["pagination"],
+  };
+}
+
+export async function getManagedEvents(token: string, limit: number) {
+  const query = new URLSearchParams({
+    page: "1",
+    limit: String(limit),
+  });
+  const response = await fetch(`/backend/api/events/mine?${query}`, {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw new Error(await getErrorMessage(response));
+  }
+
+  const body: unknown = await response.json();
+  if (!body || typeof body !== "object") {
+    throw new Error("The event service returned an invalid response.");
+  }
+
+  const result = body as Record<string, unknown>;
+  const pagination = result.pagination;
+  if (
+    !Array.isArray(result.events) ||
+    !result.events.every(isPublicEvent) ||
+    !pagination ||
+    typeof pagination !== "object"
+  ) {
+    throw new Error("The event service returned an invalid response.");
+  }
+
+  return {
+    events: result.events,
+    pagination: pagination as EventListResponse["pagination"],
+  };
+}
+
+export async function updateEvent(
+  token: string,
+  id: string,
+  event: Omit<PublicEvent, "id">,
+) {
+  const response = await fetch(`/backend/api/events/${encodeURIComponent(id)}`, {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(event),
+  });
+
+  if (!response.ok) {
+    throw new Error(await getErrorMessage(response));
+  }
+
+  const body: unknown = await response.json();
+  if (
+    !body ||
+    typeof body !== "object" ||
+    !isPublicEvent((body as Record<string, unknown>).event)
+  ) {
+    throw new Error("The event service returned an invalid response.");
+  }
+
+  return (body as { event: PublicEvent }).event;
+}
+
+export async function deleteEvent(token: string, id: string) {
+  const response = await fetch(`/backend/api/events/${encodeURIComponent(id)}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (!response.ok) {
+    throw new Error(await getErrorMessage(response));
+  }
+}
+
 export async function createEvent(
   token: string,
   event: Omit<PublicEvent, "id">,

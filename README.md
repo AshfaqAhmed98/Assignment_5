@@ -25,11 +25,17 @@ The frontend proxies `/backend/*` requests to `http://localhost:3001` by
 default. Set `BACKEND_URL` in the frontend environment if the backend uses a
 different origin.
 
+Google sign-in uses Google Identity Services. Set
+`NEXT_PUBLIC_GOOGLE_CLIENT_ID` in `Frontend/.env.local` to the same web client
+ID as `GOOGLE_CLIENT_ID` in `Backend/.env.local`, then restart the frontend.
+In Google Cloud Console, allow the frontend's origin under Authorized
+JavaScript origins (for local development, `http://localhost:3000`).
+
 Events can be listed, viewed, and created by signed-in users. The event API
 currently accepts public HTTP/HTTPS thumbnail URLs; selecting a local image
-only previews it and does not upload it. Joining events and managing,
-updating, or deleting events are still UI previews because those backend APIs
-are not available yet.
+only previews it and does not upload it. Signed-in users can join an event and
+view their joined event snapshots at `/joined-events`. Creators can view and
+manage their own events at `/manage-events`.
 
 ## Project structure
 
@@ -38,7 +44,7 @@ are not available yet.
 - `app/globals.css` — global styles
 - `app/events/` — live event listing and details
 - `app/create-event/` — authenticated event creation
-- `app/(protected)/` — joined and managed event UI previews
+- `app/(protected)/` — joined event list and creator-only event management
 - `components/` — reusable UI components
 - `lib/event-api.ts` — frontend event API requests
 - `lib/auth.tsx` — frontend authentication state and API requests

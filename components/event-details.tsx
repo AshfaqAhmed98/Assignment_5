@@ -149,7 +149,7 @@ export default function EventDetails({ eventId }: { eventId: string }) {
             </p>
             <div className="mt-5">
               {isUpcoming ? (
-                <JoinEventButton />
+                <JoinEventButton eventId={event.id} />
               ) : (
                 <p className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-center text-sm font-semibold text-white/50">
                   This event has already taken place.

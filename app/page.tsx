@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import UpcomingEventsGrid from "@/components/upcoming-events-grid";
@@ -10,28 +11,28 @@ const galleryPhotos = [
     alt: "Volunteers working together on a community project",
     caption: "Community cleanups",
     placement:
-      "col-start-1 row-start-1 aspect-[1.4/1] lg:absolute lg:left-0 lg:top-[56px] lg:h-[190px] lg:w-[59%] lg:aspect-auto",
+      "col-start-1 row-start-1 aspect-[4/3] lg:absolute lg:left-0 lg:top-[56px] lg:h-[190px] lg:w-[59%] lg:aspect-auto",
   },
   {
     src: "/gallery-neighbors.jpg",
     alt: "Community members volunteering together outdoors",
     caption: "Neighbors helping neighbors",
     placement:
-      "col-start-2 row-start-1 aspect-[0.72/1] lg:absolute lg:right-0 lg:top-0 lg:h-[236px] lg:w-[38%] lg:aspect-auto",
+      "col-start-2 row-start-1 aspect-[4/3] lg:absolute lg:right-0 lg:top-0 lg:h-[236px] lg:w-[38%] lg:aspect-auto",
   },
   {
     src: "/gallery-gathering.jpg",
     alt: "A group of volunteers gathering for a community event",
     caption: "Community gatherings",
     placement:
-      "col-start-1 row-start-2 aspect-[0.72/1] lg:absolute lg:bottom-0 lg:left-0 lg:h-[236px] lg:w-[38%] lg:aspect-auto",
+      "col-start-1 row-start-2 aspect-[4/3] lg:absolute lg:bottom-0 lg:left-0 lg:h-[236px] lg:w-[38%] lg:aspect-auto",
   },
   {
     src: "/gallery-volunteers.jpg",
     alt: "Volunteers working together to support a local cause",
     caption: "Hands ready to help",
     placement:
-      "col-start-2 row-start-2 aspect-[1.4/1] lg:absolute lg:right-0 lg:bottom-[52px] lg:h-[190px] lg:w-[59%] lg:aspect-auto",
+      "col-start-2 row-start-2 aspect-[4/3] lg:absolute lg:right-0 lg:bottom-[52px] lg:h-[190px] lg:w-[59%] lg:aspect-auto",
   },
 ];
 
@@ -73,6 +74,27 @@ const communityStats = [
 ];
 
 export default function Home() {
+  const galleryRef = useRef<HTMLElement>(null);
+  const [isGalleryVisible, setIsGalleryVisible] = useState(false);
+
+  useEffect(() => {
+    const gallery = galleryRef.current;
+    if (!gallery) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsGalleryVisible(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.15 },
+    );
+
+    observer.observe(gallery);
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <main className="flex-1 bg-[#1a1424] text-white">
       <section
@@ -489,11 +511,14 @@ export default function Home() {
       </section>
 
       <section
+        ref={galleryRef}
         aria-labelledby="gallery-heading"
-        className="overflow-hidden bg-[#15111f] px-5 py-16 text-white sm:px-8 sm:py-20"
+        className={`gallery-section overflow-hidden bg-[#15111f] px-5 py-16 text-white sm:px-8 sm:py-20 ${
+          isGalleryVisible ? "gallery-section-visible" : ""
+        }`}
       >
         <div className="mx-auto grid max-w-6xl items-center gap-10 lg:grid-cols-[0.88fr_1.12fr] lg:gap-16">
-          <div className="mx-auto max-w-xl lg:mx-0">
+          <div className="gallery-copy mx-auto max-w-xl lg:mx-0">
             <p className="bg-gradient-to-r from-cyan-300 via-fuchsia-300 to-violet-300 bg-clip-text text-xs font-semibold uppercase tracking-[0.22em] text-transparent sm:text-sm">
               Neighbors making a difference
             </p>
@@ -518,11 +543,11 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="relative grid grid-cols-2 gap-3 sm:gap-4 lg:block lg:h-[500px]">
+          <div className="gallery-grid relative grid grid-cols-2 gap-3 sm:gap-4 lg:block lg:h-[500px]">
             {galleryPhotos.map((photo) => (
               <figure
                 key={photo.src}
-                className={`group relative isolate overflow-hidden rounded-2xl border border-white/10 bg-[#211b30] shadow-[0_12px_30px_rgba(0,0,0,0.25)] ${photo.placement}`}
+                className={`gallery-photo group relative isolate overflow-hidden rounded-2xl border border-white/10 bg-[#211b30] shadow-[0_12px_30px_rgba(0,0,0,0.25)] ${photo.placement}`}
               >
                 <Image
                   src={photo.src}
@@ -545,7 +570,7 @@ export default function Home() {
             ))}
             <Link
               href="/events"
-              className="col-start-2 row-start-3 inline-flex min-h-10 w-fit items-center justify-center rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 px-5 text-xs font-bold uppercase tracking-wide text-white transition hover:-translate-y-0.5 hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fuchsia-300 lg:absolute lg:bottom-0 lg:right-0"
+              className="gallery-cta col-span-2 inline-flex min-h-10 w-fit justify-self-end items-center justify-center rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 px-5 text-xs font-bold uppercase tracking-wide text-white transition hover:-translate-y-0.5 hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fuchsia-300 lg:absolute lg:bottom-0 lg:right-0 lg:col-span-1"
             >
               View events
             </Link>

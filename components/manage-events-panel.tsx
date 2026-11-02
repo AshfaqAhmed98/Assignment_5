@@ -2,10 +2,15 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
+import { getAccessToken } from "@/lib/auth";
+import {
+  deleteEvent,
+  getManagedEvents,
+  updateEvent,
+} from "@/lib/event-api";
 import {
   eventTypes,
-  type EventType,
   type ManagedEvent,
 } from "@/lib/events";
 
@@ -32,55 +37,100 @@ function EventEditor({
   const [isEditing, setIsEditing] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
-  function handleSubmit(formEvent: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(formEvent: FormEvent<HTMLFormElement>) {
     formEvent.preventDefault();
     setErrorMessage("");
     setSuccessMessage("");
     const formData = new FormData(formEvent.currentTarget);
     const localEventDate = String(formData.get("eventDate") ?? "");
     const parsedEventDate = new Date(localEventDate);
-    const thumbnail = formData.get("thumbnail");
+    const thumbnailUrl = String(formData.get("thumbnailUrl") ?? "").trim();
 
     if (!localEventDate || Number.isNaN(parsedEventDate.getTime())) {
       setErrorMessage("Choose a valid event date and time.");
       return;
     }
 
-    if (
-      thumbnail instanceof File &&
-      thumbnail.size > 50 * 1024 * 1024
-    ) {
-      setErrorMessage("Thumbnail images must be 50 MB or smaller.");
+    if (parsedEventDate.getTime() <= Date.now()) {
+      setErrorMessage("Choose a date and time in the future.");
       return;
     }
 
-    formData.set("eventDate", parsedEventDate.toISOString());
-    onUpdated({
-      ...event,
-      title: String(formData.get("title") ?? ""),
-      description: String(formData.get("description") ?? ""),
-      type: String(formData.get("type") ?? "") as EventType,
-      thumbnailUrl:
-        String(formData.get("thumbnailUrl") ?? "").trim() ||
-        event.thumbnailUrl,
-      location: String(formData.get("location") ?? ""),
-      eventDate: parsedEventDate.toISOString(),
-    });
-    setSuccessMessage(
-      "Updated in this preview only. Event update and delete APIs are not available yet.",
-    );
-    setIsEditing(false);
+    let parsedThumbnailUrl: URL;
+    try {
+      parsedThumbnailUrl = new URL(thumbnailUrl);
+    } catch {
+      setErrorMessage("Enter a valid thumbnail URL.");
+      return;
+    }
+
+    if (!["http:", "https:"].includes(parsedThumbnailUrl.protocol)) {
+      setErrorMessage("Thumbnail URLs must use HTTP or HTTPS.");
+      return;
+    }
+
+    const typeValue = String(formData.get("type") ?? "");
+    const eventType = eventTypes.find((type) => type === typeValue);
+    if (!eventType) {
+      setErrorMessage("Choose a valid event type.");
+      return;
+    }
+
+    const token = getAccessToken();
+    if (!token) {
+      setErrorMessage("Your session has expired. Sign in again to manage events.");
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const updatedEvent = await updateEvent(token, event.id, {
+        title: String(formData.get("title") ?? "").trim(),
+        description: String(formData.get("description") ?? "").trim(),
+        type: eventType,
+        thumbnailUrl: parsedThumbnailUrl.toString(),
+        location: String(formData.get("location") ?? "").trim(),
+        eventDate: parsedEventDate.toISOString(),
+      });
+      onUpdated(updatedEvent);
+      setSuccessMessage("Event updated successfully.");
+      setIsEditing(false);
+    } catch (error: unknown) {
+      setErrorMessage(
+        error instanceof Error ? error.message : "Unable to update this event.",
+      );
+    } finally {
+      setIsSaving(false);
+    }
   }
 
-  function handleDelete() {
+  async function handleDelete() {
     if (!window.confirm(`Delete "${event.title}"? This cannot be undone.`)) {
       return;
     }
 
     setErrorMessage("");
     setSuccessMessage("");
-    onDeleted(event.id);
+    const token = getAccessToken();
+    if (!token) {
+      setErrorMessage("Your session has expired. Sign in again to manage events.");
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      await deleteEvent(token, event.id);
+      onDeleted(event.id);
+    } catch (error: unknown) {
+      setErrorMessage(
+        error instanceof Error ? error.message : "Unable to delete this event.",
+      );
+    } finally {
+      setIsDeleting(false);
+    }
   }
 
   const eventDate = new Date(event.eventDate);
@@ -140,9 +190,10 @@ function EventEditor({
               <button
                 type="button"
                 onClick={handleDelete}
-                className="inline-flex min-h-10 items-center justify-center rounded-full border border-rose-200/20 bg-rose-300/5 px-4 text-sm font-bold text-rose-200 transition hover:bg-rose-300/10 disabled:opacity-60"
+                disabled={isDeleting}
+                className="inline-flex min-h-10 items-center justify-center rounded-full border border-rose-200/20 bg-rose-300/5 px-4 text-sm font-bold text-rose-200 transition hover:bg-rose-300/10 disabled:cursor-wait disabled:opacity-60"
               >
-                Delete
+                {isDeleting ? "Deleting…" : "Delete"}
               </button>
             </div>
           </div>
@@ -206,20 +257,10 @@ function EventEditor({
             <input
               className={fieldClassName}
               name="thumbnailUrl"
-              type="text"
-              inputMode="url"
+              type="url"
+              required
               maxLength={2048}
               defaultValue={event.thumbnailUrl}
-            />
-          </label>
-
-          <label className="text-sm font-semibold text-white/85 sm:col-span-2">
-            Or upload a replacement thumbnail (JPG/PNG, up to 50 MB)
-            <input
-              className={`${fieldClassName} file:mr-3 file:rounded-full file:border-0 file:bg-violet-300/15 file:px-3 file:py-1 file:text-xs file:font-semibold file:text-violet-100`}
-              name="thumbnail"
-              type="file"
-              accept=".jpg,.jpeg,.png,image/jpeg,image/png"
             />
           </label>
 
@@ -246,9 +287,10 @@ function EventEditor({
           <div className="flex flex-wrap gap-3 sm:col-span-2">
             <button
               type="submit"
-              className="inline-flex min-h-11 items-center justify-center rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 px-5 text-sm font-bold text-white transition hover:brightness-110 disabled:opacity-60"
+              disabled={isSaving}
+              className="inline-flex min-h-11 items-center justify-center rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 px-5 text-sm font-bold text-white transition hover:brightness-110 disabled:cursor-wait disabled:opacity-60"
             >
-              Save changes
+              {isSaving ? "Saving…" : "Save changes"}
             </button>
             <button
               type="button"
@@ -256,6 +298,7 @@ function EventEditor({
                 setErrorMessage("");
                 setIsEditing(false);
               }}
+              disabled={isSaving}
               className="inline-flex min-h-11 items-center justify-center rounded-full border border-white/15 px-5 text-sm font-semibold text-white/75 transition hover:bg-white/5 disabled:opacity-60"
             >
               Cancel
@@ -283,12 +326,46 @@ function EventEditor({
   );
 }
 
-export default function ManageEventsPanel({
-  initialEvents,
-}: {
-  initialEvents: ManagedEvent[];
-}) {
-  const [events, setEvents] = useState(initialEvents);
+export default function ManageEventsPanel() {
+  const [events, setEvents] = useState<ManagedEvent[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
+
+  useEffect(() => {
+    let active = true;
+    Promise.resolve()
+      .then(() => {
+        const token = getAccessToken();
+        if (!token) {
+          throw new Error("Your session has expired. Sign in again to manage events.");
+        }
+
+        return getManagedEvents(token, 100);
+      })
+      .then(({ events: managedEvents }) => {
+        if (active) {
+          setEvents(managedEvents);
+        }
+      })
+      .catch((error: unknown) => {
+        if (active) {
+          setLoadError(
+            error instanceof Error
+              ? error.message
+              : "Unable to load your events.",
+          );
+        }
+      })
+      .finally(() => {
+        if (active) {
+          setIsLoading(false);
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   function updateEvent(updatedEvent: ManagedEvent) {
     setEvents((currentEvents) =>
@@ -337,12 +414,18 @@ export default function ManageEventsPanel({
           </Link>
         </div>
 
-        <p className="mb-5 rounded-xl border border-amber-200/20 bg-amber-300/5 px-4 py-3 text-sm text-amber-100">
-          UI preview: event update and delete APIs are not available yet, so
-          edits and removals are not saved.
-        </p>
-
-        {events.length > 0 ? (
+        {isLoading ? (
+          <p role="status" className="text-sm text-white/60">
+            Loading your events…
+          </p>
+        ) : loadError ? (
+          <p
+            role="alert"
+            className="rounded-xl border border-rose-200/20 bg-rose-300/5 px-4 py-3 text-sm text-rose-100"
+          >
+            {loadError}
+          </p>
+        ) : events.length > 0 ? (
           <div className="grid gap-4">
             {events.map((event) => (
               <EventEditor

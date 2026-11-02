@@ -4,10 +4,11 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useState, type FormEvent } from "react";
 import AuthToast, { type AuthToastMessage } from "@/components/auth-toast";
+import GoogleAuthButton from "@/components/google-auth-button";
 import { useAuth } from "@/lib/auth";
 
 export default function LoginPage() {
-  const { login } = useAuth();
+  const { login, loginWithGoogle } = useAuth();
   const router = useRouter();
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -42,11 +43,23 @@ export default function LoginPage() {
     }
   }
 
-  function handleGoogleSignIn() {
-    setToast({
-      type: "error",
-      message: "Google sign-in will be available after the backend is added.",
-    });
+  async function handleGoogleSignIn(credential: string) {
+    setIsSubmitting(true);
+    setToast(null);
+
+    try {
+      await loginWithGoogle(credential);
+      const callbackURL = new URLSearchParams(window.location.search).get(
+        "callbackURL",
+      );
+      const destination =
+        callbackURL?.startsWith("/") && !callbackURL.startsWith("//")
+          ? callbackURL
+          : "/events";
+      router.replace(destination);
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -97,32 +110,14 @@ export default function LoginPage() {
               </p>
             </div>
 
-            <button
-              type="button"
-              onClick={handleGoogleSignIn}
-              disabled
-              className="flex min-h-12 w-full items-center justify-center gap-3 rounded-xl border border-white/15 bg-white/[0.04] px-4 py-3 text-sm font-semibold text-white transition hover:border-white/30 hover:bg-white/[0.08] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300"
-            >
-              <svg aria-hidden="true" viewBox="0 0 48 48" className="size-5">
-                <path
-                  fill="#FFC107"
-                  d="M43.6 24.5c0-1.4-.1-2.8-.4-4.1H24v7.8h11a9.4 9.4 0 0 1-4.1 6.2v5.1h6.6c3.9-3.6 6.1-8.8 6.1-15Z"
-                />
-                <path
-                  fill="#FF3D00"
-                  d="M24 44c5.5 0 10.1-1.8 13.5-4.9l-6.6-5.1c-1.8 1.2-4.1 2-6.9 2-5.3 0-9.8-3.6-11.4-8.4H5.8v5.3A20 20 0 0 0 24 44Z"
-                />
-                <path
-                  fill="#4CAF50"
-                  d="M12.6 27.6a12 12 0 0 1 0-7.2v-5.3H5.8a20 20 0 0 0 0 17.8l6.8-5.3Z"
-                />
-                <path
-                  fill="#1976D2"
-                  d="M24 12c3 0 5.7 1 7.8 3.1l5.8-5.8C34.1 6 29.5 4 24 4A20 20 0 0 0 5.8 15.1l6.8 5.3C14.2 15.6 18.7 12 24 12Z"
-                />
-              </svg>
-              Google sign-in unavailable
-            </button>
+            <GoogleAuthButton
+              action="signin"
+              disabled={isSubmitting}
+              onCredential={handleGoogleSignIn}
+              onError={(message) =>
+                setToast({ type: "error", message })
+              }
+            />
 
             <div className="my-6 flex items-center gap-4">
               <span className="h-px flex-1 bg-white/10" />

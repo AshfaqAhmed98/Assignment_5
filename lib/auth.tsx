@@ -24,6 +24,7 @@ type AuthContextValue = {
   error: string | null;
   login: (email: string, password: string) => Promise<void>;
   register: (name: string, email: string, password: string) => Promise<void>;
+  loginWithGoogle: (credential: string) => Promise<void>;
   logout: () => void;
 };
 
@@ -196,6 +197,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       authenticate("register", { name, email, password }),
     [authenticate],
   );
+  const loginWithGoogle = useCallback(async (credential: string) => {
+    const response = await fetch("/backend/api/auth/google", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ credential }),
+    });
+    const body = await readJson(response);
+
+    if (!response.ok) {
+      throw new Error(getErrorMessage(body, "Google sign-in failed."));
+    }
+
+    if (!isAuthResponse(body)) {
+      throw new Error("The authentication server returned an invalid response.");
+    }
+
+    window.sessionStorage.setItem(storageKey, body.token);
+    setUser(body.user);
+    setStatus("authenticated");
+    setError(null);
+  }, []);
   const logout = useCallback(() => {
     window.sessionStorage.removeItem(storageKey);
     setUser(null);
@@ -204,8 +226,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo(
-    () => ({ user, status, error, login, register, logout }),
-    [user, status, error, login, register, logout],
+    () => ({ user, status, error, login, register, loginWithGoogle, logout }),
+    [user, status, error, login, register, loginWithGoogle, logout],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
