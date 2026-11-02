@@ -1,8 +1,19 @@
 # Assignment 5
 
-Next.js App Router starter using TypeScript, Tailwind CSS, and DaisyUI.
+Next.js App Router frontend using TypeScript, Tailwind CSS, and DaisyUI. Login,
+registration, upcoming event listings, event details, and event creation use
+the separate Express backend.
 
 ## Getting started
+
+Start the backend first in a separate terminal:
+
+```bash
+cd ../Backend
+npm run dev
+```
+
+Then start the frontend from this directory:
 
 ```bash
 npm install
@@ -10,99 +21,31 @@ npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) to view the app.
+The frontend proxies `/backend/*` requests to `http://localhost:3001` by
+default. Set `BACKEND_URL` in the frontend environment if the backend uses a
+different origin.
 
-## Better Auth and MongoDB
-
-Better Auth runs in a Next.js route at `http://localhost:3000/api/auth`, so the
-frontend and auth requests share one server and origin. Create a local
-`.env.local` from `.env.example` (`Copy-Item .env.example .env.local` in
-PowerShell), then set `DATABASE_URL` to your MongoDB connection string. Include
-the database name in the URI path (for example, `mongodb://127.0.0.1:27017/eventmatrix`).
-For MongoDB Atlas, use the connection string provided by Atlas. Existing
-`MONGODB_URI` and `MONGODB_DATABASE` settings are still supported.
-
-Set `BETTER_AUTH_SECRET` to a random secret of at least 32 characters. For
-example, generate one with:
-
-```bash
-node -e "console.log(require('node:crypto').randomBytes(32).toString('base64'))"
-```
-
-Set `BETTER_AUTH_API_KEY` to the API key from Better Auth Infra to enable
-authenticated Dash integration.
-Google sign-in is enabled only when both `GOOGLE_CLIENT_ID` and
-`GOOGLE_CLIENT_SECRET` are configured. For local development, add
-`http://localhost:3000/api/auth/callback/google` to the Google OAuth client's
-authorized redirect URIs and keep `BETTER_AUTH_URL` at
-`http://localhost:3000`. Open the frontend at that same origin. Email
-verification is not enabled.
-
-To connect Better Auth Dash or test Google OAuth using a public HTTPS origin,
-expose the Next.js server on port `3000` through a public tunnel, for example:
-
-```bash
-cloudflared tunnel --url http://localhost:3000
-```
-
-Open the frontend using the tunnel URL, set `BETTER_AUTH_URL` to that same
-public origin, and add `<tunnel-origin>/api/auth/callback/google` to the
-Google OAuth client's authorized redirect URIs. Use the same hostname for
-the frontend and auth callback. Quick Tunnel URLs can change each time a
-tunnel is restarted.
-
-Existing accounts and sessions in the previous local SQLite database are not
-copied automatically. MongoDB's Better Auth adapter creates collections as
-needed; no schema migration command is required.
-
-After configuring `.env.local` and ensuring MongoDB is running, start the app:
-
-```bash
-npm run dev
-```
-
-Set `FRONTEND_ORIGIN` to the allowed frontend origin (or a comma-separated
-list), and set `BETTER_AUTH_URL` to the origin used to open the app.
-
-To test from another device on your local network, add its frontend origin to
-`FRONTEND_ORIGIN` and `BETTER_AUTH_URL`. Restart Next.js after changing
-`.env.local`. For Google OAuth, use a public HTTPS origin routed to the
-Next.js server.
-
-## Creating events
-
-Signed-in users can create upcoming community events from `/create-event`.
-Each event includes a title, description, type, thumbnail image URL or JPG/PNG
-upload (up to 50 MB), location, and future date/time. Uploaded thumbnails are
-stored in MongoDB GridFS. Events are stored in the configured MongoDB database
-with the creating user's email, and upcoming events appear on the public
-`/events` page and homepage. The public listing only returns future events and
-links to public event details. Signed-in users can join an event; each join stores an
-event snapshot and the user's ID, name, and email in `eventJoins`, with a unique
-event/user index to prevent duplicate registrations. Creator and participant
-email addresses are not included in public event responses.
-Signed-in users can review their joined events at `/joined-events` and manage
-their own events at `/manage-events`. Event updates and deletions are restricted
-to the event creator; replacing or deleting an uploaded thumbnail removes its
-GridFS file.
+Events can be listed, viewed, and created by signed-in users. The event API
+currently accepts public HTTP/HTTPS thumbnail URLs; selecting a local image
+only previews it and does not upload it. Joining events and managing,
+updating, or deleting events are still UI previews because those backend APIs
+are not available yet.
 
 ## Project structure
 
 - `app/page.tsx` — home page
 - `app/layout.tsx` — root layout and metadata
 - `app/globals.css` — global styles
-- `app/api/auth/[...all]/route.ts` — Better Auth route handler
-- `app/api/events/route.ts` — event creation and upcoming events API
-- `app/api/events/[id]/route.ts` — owner-only event update and deletion
-- `app/api/events/[id]/join/route.ts` — authenticated event joining API
-- `app/events/page.tsx` — public upcoming events directory
-- `app/events/[id]/page.tsx` — public event details and join action
-- `app/(protected)/joined-events/page.tsx` — signed-in user's joined events
-- `app/(protected)/manage-events/page.tsx` — signed-in user's event management
-- `app/create-event/page.tsx` — authenticated event creation page
-- `server/auth.ts` — Better Auth and MongoDB configuration
-- `postcss.config.mjs` — Tailwind CSS PostCSS integration
+- `app/events/` — live event listing and details
+- `app/create-event/` — authenticated event creation
+- `app/(protected)/` — joined and managed event UI previews
+- `components/` — reusable UI components
+- `lib/event-api.ts` — frontend event API requests
+- `lib/auth.tsx` — frontend authentication state and API requests
+- `lib/events.ts` — shared event types
 
-Tailwind utility classes and DaisyUI components are available throughout the app.
+Tailwind utility classes and DaisyUI components are available throughout the
+app.
 
 ## Scripts
 

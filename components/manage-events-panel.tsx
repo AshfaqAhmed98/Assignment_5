@@ -3,17 +3,13 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState, type FormEvent } from "react";
-import { eventTypes, type EventType } from "@/server/events";
+import {
+  eventTypes,
+  type EventType,
+  type ManagedEvent,
+} from "@/lib/events";
 
-export type ManagedEvent = {
-  id: string;
-  title: string;
-  description: string;
-  type: EventType;
-  thumbnailUrl: string;
-  location: string;
-  eventDate: string;
-};
+export type { ManagedEvent } from "@/lib/events";
 
 const fieldClassName =
   "mt-2 w-full rounded-xl border border-white/10 bg-[#111019] px-4 py-3 text-sm text-white outline-none transition placeholder:text-white/40 focus:border-violet-400 focus:ring-4 focus:ring-violet-400/15 disabled:cursor-not-allowed disabled:opacity-60";
@@ -34,17 +30,13 @@ function EventEditor({
   onDeleted: (id: string) => void;
 }) {
   const [isEditing, setIsEditing] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
 
-  async function handleSubmit(formEvent: FormEvent<HTMLFormElement>) {
+  function handleSubmit(formEvent: FormEvent<HTMLFormElement>) {
     formEvent.preventDefault();
     setErrorMessage("");
     setSuccessMessage("");
-    setIsSaving(true);
-
     const formData = new FormData(formEvent.currentTarget);
     const localEventDate = String(formData.get("eventDate") ?? "");
     const parsedEventDate = new Date(localEventDate);
@@ -52,7 +44,6 @@ function EventEditor({
 
     if (!localEventDate || Number.isNaN(parsedEventDate.getTime())) {
       setErrorMessage("Choose a valid event date and time.");
-      setIsSaving(false);
       return;
     }
 
@@ -61,79 +52,35 @@ function EventEditor({
       thumbnail.size > 50 * 1024 * 1024
     ) {
       setErrorMessage("Thumbnail images must be 50 MB or smaller.");
-      setIsSaving(false);
       return;
     }
 
     formData.set("eventDate", parsedEventDate.toISOString());
-
-    try {
-      const response = await fetch(`/api/events/${event.id}`, {
-        method: "PATCH",
-        body: formData,
-      });
-      const result = (await response.json()) as {
-        error?: string;
-        thumbnailUrl?: string;
-      };
-
-      if (!response.ok) {
-        setErrorMessage(result.error ?? "Unable to update this event.");
-        return;
-      }
-
-      onUpdated({
-        ...event,
-        title: String(formData.get("title") ?? ""),
-        description: String(formData.get("description") ?? ""),
-        type: String(formData.get("type") ?? "") as EventType,
-        thumbnailUrl: result.thumbnailUrl ?? event.thumbnailUrl,
-        location: String(formData.get("location") ?? ""),
-        eventDate: parsedEventDate.toISOString(),
-      });
-      setSuccessMessage("Event updated successfully.");
-      setIsEditing(false);
-    } catch (error) {
-      setErrorMessage(
-        error instanceof Error
-          ? error.message
-          : "Unable to connect. Please try again.",
-      );
-    } finally {
-      setIsSaving(false);
-    }
+    onUpdated({
+      ...event,
+      title: String(formData.get("title") ?? ""),
+      description: String(formData.get("description") ?? ""),
+      type: String(formData.get("type") ?? "") as EventType,
+      thumbnailUrl:
+        String(formData.get("thumbnailUrl") ?? "").trim() ||
+        event.thumbnailUrl,
+      location: String(formData.get("location") ?? ""),
+      eventDate: parsedEventDate.toISOString(),
+    });
+    setSuccessMessage(
+      "Updated in this preview only. Event update and delete APIs are not available yet.",
+    );
+    setIsEditing(false);
   }
 
-  async function handleDelete() {
+  function handleDelete() {
     if (!window.confirm(`Delete "${event.title}"? This cannot be undone.`)) {
       return;
     }
 
     setErrorMessage("");
     setSuccessMessage("");
-    setIsDeleting(true);
-
-    try {
-      const response = await fetch(`/api/events/${event.id}`, {
-        method: "DELETE",
-      });
-      const result = (await response.json()) as { error?: string };
-
-      if (!response.ok) {
-        setErrorMessage(result.error ?? "Unable to delete this event.");
-        return;
-      }
-
-      onDeleted(event.id);
-    } catch (error) {
-      setErrorMessage(
-        error instanceof Error
-          ? error.message
-          : "Unable to connect. Please try again.",
-      );
-    } finally {
-      setIsDeleting(false);
-    }
+    onDeleted(event.id);
   }
 
   const eventDate = new Date(event.eventDate);
@@ -193,10 +140,9 @@ function EventEditor({
               <button
                 type="button"
                 onClick={handleDelete}
-                disabled={isDeleting}
                 className="inline-flex min-h-10 items-center justify-center rounded-full border border-rose-200/20 bg-rose-300/5 px-4 text-sm font-bold text-rose-200 transition hover:bg-rose-300/10 disabled:opacity-60"
               >
-                {isDeleting ? "Deleting…" : "Delete"}
+                Delete
               </button>
             </div>
           </div>
@@ -214,7 +160,6 @@ function EventEditor({
               required
               maxLength={120}
               defaultValue={event.title}
-              disabled={isSaving}
             />
           </label>
 
@@ -225,7 +170,6 @@ function EventEditor({
               name="type"
               required
               defaultValue={event.type}
-              disabled={isSaving}
             >
               {eventTypes.map((type) => (
                 <option key={type} value={type} className="bg-[#171421]">
@@ -243,7 +187,6 @@ function EventEditor({
               required
               maxLength={200}
               defaultValue={event.location}
-              disabled={isSaving}
             />
           </label>
 
@@ -255,7 +198,6 @@ function EventEditor({
               type="datetime-local"
               required
               defaultValue={toLocalDateTime(event.eventDate)}
-              disabled={isSaving}
             />
           </label>
 
@@ -268,7 +210,6 @@ function EventEditor({
               inputMode="url"
               maxLength={2048}
               defaultValue={event.thumbnailUrl}
-              disabled={isSaving}
             />
           </label>
 
@@ -279,7 +220,6 @@ function EventEditor({
               name="thumbnail"
               type="file"
               accept=".jpg,.jpeg,.png,image/jpeg,image/png"
-              disabled={isSaving}
             />
           </label>
 
@@ -291,7 +231,6 @@ function EventEditor({
               required
               maxLength={3000}
               defaultValue={event.description}
-              disabled={isSaving}
             />
           </label>
 
@@ -307,14 +246,12 @@ function EventEditor({
           <div className="flex flex-wrap gap-3 sm:col-span-2">
             <button
               type="submit"
-              disabled={isSaving}
               className="inline-flex min-h-11 items-center justify-center rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 px-5 text-sm font-bold text-white transition hover:brightness-110 disabled:opacity-60"
             >
-              {isSaving ? "Saving…" : "Save changes"}
+              Save changes
             </button>
             <button
               type="button"
-              disabled={isSaving}
               onClick={() => {
                 setErrorMessage("");
                 setIsEditing(false);
@@ -399,6 +336,11 @@ export default function ManageEventsPanel({
             Create Event
           </Link>
         </div>
+
+        <p className="mb-5 rounded-xl border border-amber-200/20 bg-amber-300/5 px-4 py-3 text-sm text-amber-100">
+          UI preview: event update and delete APIs are not available yet, so
+          edits and removals are not saved.
+        </p>
 
         {events.length > 0 ? (
           <div className="grid gap-4">

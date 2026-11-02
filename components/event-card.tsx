@@ -1,15 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
+import type { PublicEvent } from "@/lib/events";
 
-export type PublicEvent = {
-  id: string;
-  title: string;
-  description: string;
-  type: string;
-  thumbnailUrl: string;
-  location: string;
-  eventDate: string;
-};
+export type { PublicEvent } from "@/lib/events";
 
 export default function EventCard({
   event,

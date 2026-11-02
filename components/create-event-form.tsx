@@ -10,7 +10,9 @@ import {
   type ChangeEvent,
   type FormEvent,
 } from "react";
-import { eventTypes } from "@/server/events";
+import { createEvent } from "@/lib/event-api";
+import { getAccessToken } from "@/lib/auth";
+import { eventTypes } from "@/lib/events";
 
 function getLocalDateTimeMinimum() {
   const now = new Date();
@@ -24,9 +26,8 @@ const fieldClassName =
 export default function CreateEventForm() {
   const router = useRouter();
   const [minimumDate, setMinimumDate] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
-  const [isCreated, setIsCreated] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [thumbnailMode, setThumbnailMode] = useState<"url" | "upload">("url");
   const [thumbnailUrl, setThumbnailUrl] = useState("");
   const [uploadedThumbnail, setUploadedThumbnail] = useState<File | null>(null);
@@ -79,74 +80,88 @@ export default function CreateEventForm() {
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setErrorMessage("");
-    setIsSubmitting(true);
 
     const formData = new FormData(event.currentTarget);
     const thumbnailUrlInput = event.currentTarget.elements.namedItem("thumbnailUrl");
     const localEventDate = String(formData.get("eventDate") ?? "");
     const parsedEventDate = new Date(localEventDate);
 
-    if (
-      thumbnailMode === "url" &&
-      (!(thumbnailUrlInput instanceof HTMLInputElement) ||
-        !thumbnailUrlInput.validity.valid)
-    ) {
-      setErrorMessage("Enter a valid thumbnail URL or upload a JPG or PNG image.");
-      setIsSubmitting(false);
+    if (thumbnailMode === "upload" && !uploadedThumbnail) {
+      setErrorMessage("Choose a JPG or PNG thumbnail image.");
       return;
     }
 
-    if (thumbnailMode === "upload" && !uploadedThumbnail) {
-      setErrorMessage("Choose a JPG or PNG thumbnail image.");
-      setIsSubmitting(false);
+    if (thumbnailMode === "upload") {
+      setErrorMessage(
+        "Image uploads are not supported yet. Choose a public HTTP or HTTPS image URL instead.",
+      );
+      return;
+    }
+
+    if (
+      !(thumbnailUrlInput instanceof HTMLInputElement) ||
+      !thumbnailUrlInput.validity.valid
+    ) {
+      setErrorMessage("Enter a valid thumbnail URL.");
+      return;
+    }
+
+    const formThumbnailUrl = String(formData.get("thumbnailUrl") ?? "").trim();
+    let parsedThumbnailUrl: URL;
+    try {
+      parsedThumbnailUrl = new URL(formThumbnailUrl);
+    } catch {
+      setErrorMessage("Enter a valid thumbnail URL.");
+      return;
+    }
+
+    if (!["http:", "https:"].includes(parsedThumbnailUrl.protocol)) {
+      setErrorMessage("Thumbnail URLs must use HTTP or HTTPS.");
       return;
     }
 
     if (!localEventDate || Number.isNaN(parsedEventDate.getTime())) {
       setErrorMessage("Choose a valid event date and time.");
-      setIsSubmitting(false);
       return;
     }
 
     if (parsedEventDate.getTime() <= Date.now()) {
       setErrorMessage("Choose a date and time in the future.");
-      setIsSubmitting(false);
       updateMinimumDate();
       return;
     }
 
+    const title = String(formData.get("title") ?? "").trim();
+    const description = String(formData.get("description") ?? "").trim();
+    const typeValue = String(formData.get("type") ?? "");
+    const location = String(formData.get("location") ?? "").trim();
+    const eventType = eventTypes.find((type) => type === typeValue);
+
+    if (!eventType) {
+      setErrorMessage("Choose a valid event type.");
+      return;
+    }
+
+    const token = getAccessToken();
+    if (!token) {
+      setErrorMessage("Your session has expired. Sign in again to create an event.");
+      return;
+    }
+
+    setIsSubmitting(true);
     try {
-      const requestBody = new FormData();
-      requestBody.set("title", String(formData.get("title") ?? ""));
-      requestBody.set("description", String(formData.get("description") ?? ""));
-      requestBody.set("type", String(formData.get("type") ?? ""));
-      requestBody.set("location", String(formData.get("location") ?? ""));
-      requestBody.set("eventDate", parsedEventDate.toISOString());
-
-      if (thumbnailMode === "upload" && uploadedThumbnail) {
-        requestBody.set("thumbnail", uploadedThumbnail);
-      } else {
-        requestBody.set("thumbnailUrl", thumbnailUrl);
-      }
-
-      const response = await fetch("/api/events", {
-        method: "POST",
-        body: requestBody,
+      const createdEvent = await createEvent(token, {
+        title,
+        description,
+        type: eventType,
+        thumbnailUrl: parsedThumbnailUrl.toString(),
+        location,
+        eventDate: parsedEventDate.toISOString(),
       });
-      const result = (await response.json()) as { error?: string };
-
-      if (!response.ok) {
-        setErrorMessage(result.error ?? "Unable to create the event.");
-        return;
-      }
-
-      setIsCreated(true);
-      window.setTimeout(() => router.push("/events"), 1200);
-    } catch (error) {
+      router.push(`/events/${encodeURIComponent(createdEvent.id)}`);
+    } catch (error: unknown) {
       setErrorMessage(
-        error instanceof Error
-          ? error.message
-          : "Unable to connect. Please try again.",
+        error instanceof Error ? error.message : "Unable to create the event.",
       );
     } finally {
       setIsSubmitting(false);
@@ -244,7 +259,6 @@ export default function CreateEventForm() {
                   required
                   maxLength={120}
                   placeholder="e.g. Riverside Park Cleanup"
-                  disabled={isSubmitting || isCreated}
                 />
               </label>
 
@@ -255,7 +269,6 @@ export default function CreateEventForm() {
                   name="type"
                   required
                   defaultValue=""
-                  disabled={isSubmitting || isCreated}
                 >
                   <option value="" disabled className="bg-[#171421]">
                     Choose a type
@@ -276,7 +289,6 @@ export default function CreateEventForm() {
                   required
                   maxLength={200}
                   placeholder="Venue or meeting point"
-                  disabled={isSubmitting || isCreated}
                 />
               </label>
 
@@ -290,7 +302,6 @@ export default function CreateEventForm() {
                   onFocus={updateMinimumDate}
                   onChange={updateMinimumDate}
                   required
-                  disabled={isSubmitting || isCreated}
                 />
               </label>
 
@@ -331,14 +342,12 @@ export default function CreateEventForm() {
                       event.currentTarget.setCustomValidity("");
                     }}
                     placeholder="https://example.com/event-photo.jpg"
-                    disabled={isSubmitting || isCreated}
                   />
                   <button
                     type="button"
                     aria-label="Choose thumbnail image source"
                     aria-haspopup="listbox"
                     aria-expanded={isThumbnailMenuOpen}
-                    disabled={isSubmitting || isCreated}
                     onClick={() =>
                       setIsThumbnailMenuOpen((isOpen) => !isOpen)
                     }
@@ -418,7 +427,8 @@ export default function CreateEventForm() {
                   </div>
                 ) : (
                   <span className="mt-1.5 block text-xs font-normal text-white/60">
-                    Use a public image URL or choose a JPG/PNG file up to 50 MB.
+                    Uploaded images are preview-only. Use a public HTTP or HTTPS
+                    URL to create the event.
                   </span>
                 )}
               </div>
@@ -431,7 +441,6 @@ export default function CreateEventForm() {
                   required
                   maxLength={3000}
                   placeholder="What will happen? Who can join? What should people bring?"
-                  disabled={isSubmitting || isCreated}
                 />
               </label>
 
@@ -444,28 +453,13 @@ export default function CreateEventForm() {
                 </p>
               )}
 
-              {isCreated && (
-                <p
-                  role="status"
-                  className="rounded-xl border border-emerald-300/25 bg-emerald-950/50 px-4 py-3 text-sm font-medium text-emerald-100 sm:col-span-2"
-                >
-                  Event created successfully. Taking you to upcoming events…
-                </p>
-              )}
-
               <button
                 type="submit"
-                disabled={isSubmitting || isCreated}
+                disabled={isSubmitting}
                 className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-fuchsia-500 px-6 py-3 text-sm font-bold text-white shadow-[0_8px_24px_rgba(168,85,247,0.3)] transition hover:-translate-y-0.5 hover:brightness-110 hover:shadow-[0_12px_30px_rgba(219,39,119,0.35)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-200 disabled:cursor-wait disabled:opacity-60 sm:col-span-2 sm:w-fit"
               >
-                {isCreated
-                  ? "Event created"
-                  : isSubmitting
-                    ? "Creating event…"
-                    : "Create event"}
-                {!isSubmitting && !isCreated && (
-                  <span aria-hidden="true">→</span>
-                )}
+                {isSubmitting ? "Creating event…" : "Create event"}
+                <span aria-hidden="true">→</span>
               </button>
             </form>
           </div>

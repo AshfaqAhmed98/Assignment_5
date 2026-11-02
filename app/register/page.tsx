@@ -11,7 +11,7 @@ import {
   type FormEvent,
 } from "react";
 import AuthToast, { type AuthToastMessage } from "@/components/auth-toast";
-import { authClient } from "@/lib/auth-client";
+import { useAuth } from "@/lib/auth";
 
 type RegistrationForm = {
   name: string;
@@ -21,6 +21,7 @@ type RegistrationForm = {
 };
 
 export default function RegisterPage() {
+  const { register } = useAuth();
   const router = useRouter();
   const [form, setForm] = useState<RegistrationForm>({
     name: "",
@@ -29,11 +30,11 @@ export default function RegisterPage() {
     password: "",
   });
   const [passwordVisible, setPasswordVisible] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [photoMode, setPhotoMode] = useState<"url" | "upload">("url");
   const [uploadedPhoto, setUploadedPhoto] = useState("");
   const [photoFileName, setPhotoFileName] = useState("");
   const [isPhotoMenuOpen, setIsPhotoMenuOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [toast, setToast] = useState<AuthToastMessage | null>(null);
   const dismissToast = useCallback(() => setToast(null), []);
   const photoFileInputRef = useRef<HTMLInputElement>(null);
@@ -118,9 +119,7 @@ export default function RegisterPage() {
     }
 
     const passwordRequirements = [
-      { valid: /[A-Z]/.test(form.password), label: "one uppercase letter" },
-      { valid: /[a-z]/.test(form.password), label: "one lowercase letter" },
-      { valid: form.password.length >= 6, label: "at least 6 characters" },
+      { valid: form.password.length >= 8, label: "at least 8 characters" },
     ];
     const unmetRequirements = passwordRequirements
       .filter((requirement) => !requirement.valid)
@@ -135,35 +134,19 @@ export default function RegisterPage() {
     }
 
     setIsSubmitting(true);
-
     try {
-      const { error } = await authClient.signUp.email({
-        name: form.name.trim(),
-        email: form.email.trim(),
-        password: form.password,
-        image: photoMode === "upload" ? uploadedPhoto : form.photoURL.trim(),
-      });
-
-      if (error) {
-        setToast({
-          type: "error",
-          message: error.message ?? "Unable to create your account.",
-        });
-        return;
-      }
-
+      await register(form.name.trim(), form.email.trim(), form.password);
       setToast({
         type: "success",
-        message: "Your account is ready. Welcome to EventMatrix!",
+        message:
+          "Account created. Profile photos are preview-only and are not saved yet.",
       });
-      window.setTimeout(() => router.push("/"), 900);
+      router.replace("/events");
     } catch (error) {
       setToast({
         type: "error",
         message:
-          error instanceof Error
-            ? error.message
-            : "Unable to connect to the authentication server.",
+          error instanceof Error ? error.message : "Unable to create your account.",
       });
     } finally {
       setIsSubmitting(false);
@@ -171,9 +154,7 @@ export default function RegisterPage() {
   }
 
   const passwordChecks = [
-    { label: "One uppercase letter", valid: /[A-Z]/.test(form.password) },
-    { label: "One lowercase letter", valid: /[a-z]/.test(form.password) },
-    { label: "At least 6 characters", valid: form.password.length >= 6 },
+    { label: "At least 8 characters", valid: form.password.length >= 8 },
   ];
 
   return (
@@ -197,6 +178,10 @@ export default function RegisterPage() {
           </h1>
           <p className="mt-2 text-sm leading-6 text-white/55">
             Sign up to find and share community events.
+          </p>
+          <p className="mt-2 text-xs leading-5 text-amber-100/75">
+            Profile photo selection is a preview and is not saved to your
+            account yet.
           </p>
         </div>
 
@@ -409,7 +394,7 @@ export default function RegisterPage() {
             disabled={isSubmitting}
             className="min-h-12 w-full rounded-xl bg-gradient-to-r from-violet-600 via-fuchsia-500 to-rose-500 px-4 py-3 text-sm font-bold text-white shadow-[0_8px_24px_rgba(168,85,247,0.25)] transition hover:-translate-y-0.5 hover:brightness-110 hover:shadow-[0_12px_30px_rgba(236,72,153,0.35)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fuchsia-300"
           >
-            {isSubmitting ? "Creating account..." : "Create account"}
+            {isSubmitting ? "Creating account…" : "Create account"}
           </button>
         </form>
 

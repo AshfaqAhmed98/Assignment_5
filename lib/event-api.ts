@@ -1,0 +1,134 @@
+import type { PublicEvent } from "@/lib/events";
+
+type EventListResponse = {
+  events: PublicEvent[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+};
+
+function isPublicEvent(value: unknown): value is PublicEvent {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const event = value as Record<string, unknown>;
+  return (
+    typeof event.id === "string" &&
+    typeof event.title === "string" &&
+    typeof event.description === "string" &&
+    typeof event.type === "string" &&
+    typeof event.thumbnailUrl === "string" &&
+    typeof event.location === "string" &&
+    typeof event.eventDate === "string"
+  );
+}
+
+async function getErrorMessage(response: Response) {
+  try {
+    const body: unknown = await response.json();
+    if (body && typeof body === "object") {
+      const error = (body as Record<string, unknown>).error;
+      if (error && typeof error === "object") {
+        const message = (error as Record<string, unknown>).message;
+        if (typeof message === "string") {
+          return message;
+        }
+      }
+    }
+  } catch {
+    return `Request failed with status ${response.status}.`;
+  }
+
+  return `Request failed with status ${response.status}.`;
+}
+
+export async function getUpcomingEvents(limit: number) {
+  const query = new URLSearchParams({
+    page: "1",
+    limit: String(limit),
+    sort: "eventDate",
+    order: "asc",
+  });
+  const response = await fetch(`/backend/api/events?${query}`, {
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw new Error(await getErrorMessage(response));
+  }
+
+  const body: unknown = await response.json();
+  if (!body || typeof body !== "object") {
+    throw new Error("The event service returned an invalid response.");
+  }
+
+  const result = body as Record<string, unknown>;
+  const pagination = result.pagination;
+  if (
+    !Array.isArray(result.events) ||
+    !result.events.every(isPublicEvent) ||
+    !pagination ||
+    typeof pagination !== "object"
+  ) {
+    throw new Error("The event service returned an invalid response.");
+  }
+
+  return {
+    events: result.events,
+    pagination: pagination as EventListResponse["pagination"],
+  };
+}
+
+export async function getEvent(id: string) {
+  const response = await fetch(`/backend/api/events/${encodeURIComponent(id)}`, {
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw new Error(await getErrorMessage(response));
+  }
+
+  const body: unknown = await response.json();
+  if (
+    !body ||
+    typeof body !== "object" ||
+    !isPublicEvent((body as Record<string, unknown>).event)
+  ) {
+    throw new Error("The event service returned an invalid response.");
+  }
+
+  return (body as { event: PublicEvent }).event;
+}
+
+export async function createEvent(
+  token: string,
+  event: Omit<PublicEvent, "id">,
+) {
+  const response = await fetch("/backend/api/events", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(event),
+  });
+
+  if (!response.ok) {
+    throw new Error(await getErrorMessage(response));
+  }
+
+  const body: unknown = await response.json();
+  if (
+    !body ||
+    typeof body !== "object" ||
+    !isPublicEvent((body as Record<string, unknown>).event)
+  ) {
+    throw new Error("The event service returned an invalid response.");
+  }
+
+  return (body as { event: PublicEvent }).event;
+}

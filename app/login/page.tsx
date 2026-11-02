@@ -4,19 +4,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useState, type FormEvent } from "react";
 import AuthToast, { type AuthToastMessage } from "@/components/auth-toast";
-import { authClient } from "@/lib/auth-client";
-
-function getCallbackPath() {
-  const callbackURL = new URLSearchParams(window.location.search).get(
-    "callbackURL",
-  );
-
-  return callbackURL?.startsWith("/events/") && !callbackURL.startsWith("//")
-    ? callbackURL
-    : "/";
-}
+import { useAuth } from "@/lib/auth";
 
 export default function LoginPage() {
+  const { login } = useAuth();
   const router = useRouter();
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -26,74 +17,36 @@ export default function LoginPage() {
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
-    const callbackPath = getCallbackPath();
     setIsSubmitting(true);
 
     try {
-      const { error } = await authClient.signIn.email({
-        email: String(formData.get("email")),
-        password: String(formData.get("password")),
-      });
-
-      if (error) {
-        setToast({
-          type: "error",
-          message: error.message ?? "Unable to sign in.",
-        });
-        return;
-      }
-
-      setToast({ type: "success", message: "You’re signed in." });
-      window.setTimeout(() => router.push(callbackPath), 900);
+      await login(
+        String(formData.get("email") ?? ""),
+        String(formData.get("password") ?? ""),
+      );
+      const callbackURL = new URLSearchParams(window.location.search).get(
+        "callbackURL",
+      );
+      const destination =
+        callbackURL?.startsWith("/") && !callbackURL.startsWith("//")
+          ? callbackURL
+          : "/events";
+      router.replace(destination);
     } catch (error) {
       setToast({
         type: "error",
-        message:
-          error instanceof Error
-            ? error.message
-            : "Unable to connect to the authentication server.",
+        message: error instanceof Error ? error.message : "Unable to log in.",
       });
     } finally {
       setIsSubmitting(false);
     }
   }
 
-  async function handleGoogleSignIn() {
-    const callbackPath = getCallbackPath();
-    setIsSubmitting(true);
-
-    try {
-      const { data, error } = await authClient.signIn.social({
-        provider: "google",
-        callbackURL: new URL(callbackPath, window.location.origin).toString(),
-        disableRedirect: true,
-      });
-
-      if (error) {
-        setToast({
-          type: "error",
-          message: error.message ?? "Google sign-in failed.",
-        });
-        return;
-      }
-
-      if (!data?.url) {
-        setToast({ type: "error", message: "Google did not return a sign-in URL." });
-        return;
-      }
-
-      window.location.assign(data.url);
-    } catch (error) {
-      setToast({
-        type: "error",
-        message:
-          error instanceof Error
-            ? error.message
-            : "Unable to connect to the authentication server.",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
+  function handleGoogleSignIn() {
+    setToast({
+      type: "error",
+      message: "Google sign-in will be available after the backend is added.",
+    });
   }
 
   return (
@@ -147,7 +100,7 @@ export default function LoginPage() {
             <button
               type="button"
               onClick={handleGoogleSignIn}
-              disabled={isSubmitting}
+              disabled
               className="flex min-h-12 w-full items-center justify-center gap-3 rounded-xl border border-white/15 bg-white/[0.04] px-4 py-3 text-sm font-semibold text-white transition hover:border-white/30 hover:bg-white/[0.08] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300"
             >
               <svg aria-hidden="true" viewBox="0 0 48 48" className="size-5">
@@ -168,7 +121,7 @@ export default function LoginPage() {
                   d="M24 12c3 0 5.7 1 7.8 3.1l5.8-5.8C34.1 6 29.5 4 24 4A20 20 0 0 0 5.8 15.1l6.8 5.3C14.2 15.6 18.7 12 24 12Z"
                 />
               </svg>
-              {isSubmitting ? "Connecting to Google..." : "Continue with Google"}
+              Google sign-in unavailable
             </button>
 
             <div className="my-6 flex items-center gap-4">
@@ -234,7 +187,7 @@ export default function LoginPage() {
                 disabled={isSubmitting}
                 className="min-h-12 w-full rounded-xl bg-gradient-to-r from-violet-600 via-fuchsia-500 to-rose-500 px-4 py-3 text-sm font-bold text-white shadow-[0_8px_24px_rgba(168,85,247,0.25)] transition hover:-translate-y-0.5 hover:brightness-110 hover:shadow-[0_12px_30px_rgba(236,72,153,0.35)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fuchsia-300"
               >
-                {isSubmitting ? "Signing in..." : "Log in"}
+                {isSubmitting ? "Logging in…" : "Log in"}
               </button>
             </form>
 

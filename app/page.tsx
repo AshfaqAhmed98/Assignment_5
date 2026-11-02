@@ -2,8 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import EventCard, { type PublicEvent } from "@/components/event-card";
+import UpcomingEventsGrid from "@/components/upcoming-events-grid";
 
 const galleryPhotos = [
   {
@@ -74,54 +73,6 @@ const communityStats = [
 ];
 
 export default function Home() {
-  const [createdEvents, setCreatedEvents] = useState<PublicEvent[]>([]);
-  const [eventsError, setEventsError] = useState("");
-  const [isLoadingEvents, setIsLoadingEvents] = useState(true);
-
-  useEffect(() => {
-    let isMounted = true;
-    const controller = new AbortController();
-
-    async function loadEvents() {
-      try {
-        const response = await fetch("/api/events", {
-          signal: controller.signal,
-          cache: "no-store",
-        });
-        const result = (await response.json()) as {
-          error?: string;
-          events?: PublicEvent[];
-        };
-
-        if (!response.ok) {
-          throw new Error(result.error ?? "Unable to load upcoming events.");
-        }
-
-        if (isMounted) {
-          setCreatedEvents(result.events ?? []);
-          setEventsError("");
-          setIsLoadingEvents(false);
-        }
-      } catch (error) {
-        if (isMounted && !controller.signal.aborted) {
-          setEventsError(
-            error instanceof Error
-              ? error.message
-              : "Unable to load upcoming events.",
-          );
-          setIsLoadingEvents(false);
-        }
-      }
-    }
-
-    void loadEvents();
-
-    return () => {
-      isMounted = false;
-      controller.abort();
-    };
-  }, []);
-
   return (
     <main className="flex-1 bg-[#1a1424] text-white">
       <section
@@ -533,39 +484,7 @@ export default function Home() {
               </Link>
           </div>
 
-          {eventsError && (
-            <p
-              role="status"
-              className="mb-5 rounded-xl border border-amber-200/20 bg-amber-300/5 px-4 py-3 text-sm text-amber-100"
-            >
-              {eventsError}
-            </p>
-          )}
-
-          {isLoadingEvents && (
-            <p role="status" className="mb-5 text-sm text-white/60">
-              Loading upcoming events…
-            </p>
-          )}
-
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {createdEvents.map((event) => (
-              <EventCard key={event.id} event={event} />
-            ))}
-          </div>
-          {!isLoadingEvents && !eventsError && createdEvents.length === 0 && (
-            <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-6 py-10 text-center">
-              <p className="text-sm text-white/65">
-                There are no upcoming community events yet.
-              </p>
-              <Link
-                href="/create-event"
-                className="mt-4 inline-flex min-h-11 items-center justify-center rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 px-5 text-sm font-bold text-white transition hover:brightness-110"
-              >
-                Create the first event
-              </Link>
-            </div>
-          )}
+          <UpcomingEventsGrid limit={3} />
         </div>
       </section>
 
