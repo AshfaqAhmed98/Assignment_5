@@ -27,7 +27,7 @@ export default function GoogleAuthButton({
     const observer = new ResizeObserver(([entry]) => {
       if (entry) {
         const width = Math.floor(entry.contentRect.width);
-        setButtonWidth(Math.min(400, Math.max(200, width)));
+        setButtonWidth(Math.min(400, Math.max(200, width - 14)));
       }
     });
     observer.observe(container);
@@ -47,30 +47,34 @@ export default function GoogleAuthButton({
   return (
     <div
       ref={containerRef}
-      className={disabled ? "pointer-events-none opacity-60" : undefined}
+      className={`google-auth-glow mx-auto max-w-[400px] ${
+        disabled ? "google-auth-glow-disabled" : ""
+      }`}
     >
-      <GoogleLogin
-        text={action === "signup" ? "signup_with" : "signin"}
-        theme="filled_black"
-        shape="rectangular"
-        size="large"
-        width={String(buttonWidth)}
-        onSuccess={(response) => {
-          if (!response.credential) {
-            onError("Google did not return an ID token. Please try again.");
-            return;
-          }
+      <div className="relative z-10 flex justify-center">
+        <GoogleLogin
+          text={action === "signup" ? "signup_with" : "signin"}
+          theme="filled_black"
+          shape="pill"
+          size="large"
+          width={String(buttonWidth)}
+          onSuccess={(response) => {
+            if (!response.credential) {
+              onError("Google did not return an ID token. Please try again.");
+              return;
+            }
 
-          void onCredential(response.credential).catch((error: unknown) => {
-            onError(
-              error instanceof Error
-                ? error.message
-                : "Google sign-in failed. Please try again.",
-            );
-          });
-        }}
-        onError={() => onError("Google sign-in failed. Please try again.")}
-      />
+            void onCredential(response.credential).catch((error: unknown) => {
+              onError(
+                error instanceof Error
+                  ? error.message
+                  : "Google sign-in failed. Please try again.",
+              );
+            });
+          }}
+          onError={() => onError("Google sign-in failed. Please try again.")}
+        />
+      </div>
     </div>
   );
 }

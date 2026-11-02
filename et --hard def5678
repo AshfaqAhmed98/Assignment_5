@@ -1,0 +1,48 @@
+[33macab544[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m HEAD@{0}: commit: Fixed the gallery section in small display and added a transition,fix some issues,Restyled
+[33md50af2f[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m HEAD@{1}: reset: moving to HEAD~1
+[33m290b1eb[m HEAD@{2}: reset: moving to HEAD~1
+[33m7b5175b[m HEAD@{3}: commit: Some Design And Style Change
+[33m290b1eb[m HEAD@{4}: commit: Fixed the gallery section in small display and added a transition
+[33md50af2f[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m HEAD@{5}: reset: moving to HEAD~1
+[33mf348140[m HEAD@{6}: commit: Fixed the gallery section in small display and added a transtition
+[33md50af2f[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m HEAD@{7}: commit: Connected frontend event pages to backend APIs
+[33mf91489e[m HEAD@{8}: rebase (finish): returning to refs/heads/main
+[33mf91489e[m HEAD@{9}: rebase (pick): Added Some Cards And Added A Gallery Section
+[33m3933a08[m HEAD@{10}: rebase (pick): Created the Joined And Manage Events Page
+[33m16f50c5[m HEAD@{11}: rebase (continue): Upgraded the upcoming event and view event button functionality
+[33m610e907[m HEAD@{12}: rebase (continue): Created the Create Event Page
+[33m5b53e14[m HEAD@{13}: rebase (continue): Added Dropdown Profile Picture
+[33m1ea0d80[m HEAD@{14}: rebase (start): checkout 1ea0d80
+[33m0b9d273[m[33m ([m[1;32mbackup-before-cleanup[m[33m)[m HEAD@{15}: reset: moving to HEAD
+[33m0b9d273[m[33m ([m[1;32mbackup-before-cleanup[m[33m)[m HEAD@{16}: reset: moving to HEAD~1
+[33m7d00c09[m HEAD@{17}: commit: Some issues
+[33m0b9d273[m[33m ([m[1;32mbackup-before-cleanup[m[33m)[m HEAD@{18}: reset: moving to HEAD
+[33m0b9d273[m[33m ([m[1;32mbackup-before-cleanup[m[33m)[m HEAD@{19}: rebase (abort): returning to refs/heads/main
+[33m0b9d273[m[33m ([m[1;32mbackup-before-cleanup[m[33m)[m HEAD@{20}: rebase (abort): returning to refs/heads/main
+[33m0b9d273[m[33m ([m[1;32mbackup-before-cleanup[m[33m)[m HEAD@{21}: rebase (finish): returning to refs/heads/main
+[33m0b9d273[m[33m ([m[1;32mbackup-before-cleanup[m[33m)[m HEAD@{22}: rebase (start): checkout HEAD~9
+[33m0b9d273[m[33m ([m[1;32mbackup-before-cleanup[m[33m)[m HEAD@{23}: rebase (abort): returning to refs/heads/main
+[33m0b9d273[m[33m ([m[1;32mbackup-before-cleanup[m[33m)[m HEAD@{24}: rebase (abort): returning to refs/heads/main
+[33m0b9d273[m[33m ([m[1;32mbackup-before-cleanup[m[33m)[m HEAD@{25}: rebase (abort): returning to refs/heads/main
+[33m0b9d273[m[33m ([m[1;32mbackup-before-cleanup[m[33m)[m HEAD@{26}: rebase (abort): returning to refs/heads/main
+[33m0b9d273[m[33m ([m[1;32mbackup-before-cleanup[m[33m)[m HEAD@{27}: reset: moving to 0b9d273
+[33m7109feb[m HEAD@{28}: commit: Split Express API into a separate backend repository
+[33m0b9d273[m[33m ([m[1;32mbackup-before-cleanup[m[33m)[m HEAD@{29}: commit: Added Some Cards And Added A Gallery Section
+[33m4d2464c[m HEAD@{30}: commit: Created the Joined And Manage Events Page
+[33m51754c0[m HEAD@{31}: commit: Upgraded the upcoming event and view event button functionality
+[33m519014a[m HEAD@{32}: commit: Created the Create Event Page
+[33m600e5f2[m HEAD@{33}: commit: Added Dropdown Profile Picture
+[33mb07d95c[m HEAD@{34}: commit: Integrate Better Auth with MongoDB
+[33m329711e[m HEAD@{35}: commit: Intregrating Better Auth
+[33me8e119d[m HEAD@{36}: commit: Initialize Express Server
+[33md68e9b1[m HEAD@{37}: commit: Initialize Express Server
+[33m1ea0d80[m HEAD@{38}: commit: Added A Recent Upcoming Events Section
+[33mb7b0e74[m HEAD@{39}: commit: Added A Feature section
+[33m71f8b8f[m HEAD@{40}: commit: Added A Banner Section
+[33ma2109da[m HEAD@{41}: commit: Added A Register Page
+[33ma29ac19[m HEAD@{42}: commit: Added A login Page
+[33mc6490e1[m HEAD@{43}: commit: Created responsive navbar
+[33m6c51286[m HEAD@{44}: commit: Install tailwind css and daisy ui
+[33mfb00af8[m HEAD@{45}: commit: Initialize Next.js with TypeScript
+[33mc10b21f[m HEAD@{46}: Branch: renamed refs/heads/master to refs/heads/main
+[33mc10b21f[m HEAD@{48}: commit (initial): first commit

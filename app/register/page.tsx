@@ -192,10 +192,6 @@ export default function RegisterPage() {
           <p className="mt-2 text-sm leading-6 text-white/55">
             Sign up to find and share community events.
           </p>
-          <p className="mt-2 text-xs leading-5 text-amber-100/75">
-            Profile photo selection is a preview and is not saved to your
-            account yet.
-          </p>
         </div>
 
         <GoogleAuthButton

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Navbar from "@/components/navbar";
+import SiteFooter from "@/components/site-footer";
 import { AuthProvider } from "@/lib/auth";
 import GoogleAuthProvider from "@/components/google-auth-provider";
 import "./globals.css";
@@ -31,6 +32,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <GoogleAuthProvider>
             <Navbar />
             {children}
+            <SiteFooter />
           </GoogleAuthProvider>
         </AuthProvider>
       </body>

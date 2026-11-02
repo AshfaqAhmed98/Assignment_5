@@ -8,10 +8,22 @@ import { useAuth } from "@/lib/auth";
 
 const publicLinks = [["Upcoming Events", "/events"]];
 const protectedLinks = [
-  ["Create Event", "/create-event"],
-  ["Manage Events", "/manage-events"],
-  ["Joined Events", "/joined-events"],
-];
+  [
+    "Create Event",
+    "/create-event",
+    "M12 5v14m-7-7h14",
+  ],
+  [
+    "Manage Events",
+    "/manage-events",
+    "M4 5.5A1.5 1.5 0 0 1 5.5 4h13A1.5 1.5 0 0 1 20 5.5v13a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 18.5v-13ZM8 8h8M8 12h8M8 16h5",
+  ],
+  [
+    "Joined Events",
+    "/joined-events",
+    "M16 19a4 4 0 0 0-8 0m12 0a4 4 0 0 0-3-3.87M12 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm5-5a3 3 0 0 1 0 6",
+  ],
+] as const;
 
 export default function Navbar() {
   const { user, status, logout } = useAuth();
@@ -43,9 +55,21 @@ export default function Navbar() {
             <Link
               key={href}
               href={href}
-              className="whitespace-nowrap rounded-full px-3 py-2.5 text-xs font-semibold text-white/70 transition hover:bg-white/10 hover:text-white lg:px-4 lg:text-sm"
+              className="navbar-events-button whitespace-nowrap px-3 py-2.5 text-xs font-semibold lg:px-4 lg:text-sm"
             >
-              {label}
+              <span className="relative z-10">{label}</span>
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                className="navbar-events-icon relative z-10 size-4 shrink-0"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zm4.28 10.28a.75.75 0 0 0 0-1.06l-3-3a.75.75 0 1 0-1.06 1.06l1.72 1.72H8.25a.75.75 0 0 0 0 1.5h5.69l-1.72 1.72a.75.75 0 1 0 1.06 1.06l3-3z"
+                  clipRule="evenodd"
+                />
+              </svg>
             </Link>
           ))}
         </nav>
@@ -80,25 +104,55 @@ export default function Navbar() {
                 <p className="truncate text-sm font-bold text-white">{user.name}</p>
                 <p className="mt-1 truncate text-xs text-white/50">{user.email}</p>
               </div>
-              <nav aria-label="Profile navigation" className="py-2">
-                {protectedLinks.map(([label, href]) => (
+              <nav
+                aria-label="Profile navigation"
+                className="profile-navigation relative py-2"
+              >
+                <span aria-hidden="true" className="profile-navigation-glider" />
+                {protectedLinks.map(([label, href, icon]) => (
                   <Link
                     key={href}
                     href={href}
                     onClick={() => profileMenuRef.current?.removeAttribute("open")}
-                    className="block rounded-xl px-3 py-2.5 text-sm font-medium text-white/75 transition hover:bg-white/10 hover:text-white"
+                    className="profile-navigation-link relative z-10 flex h-11 items-center gap-3 rounded-xl px-3 text-sm font-medium text-white/65 transition hover:text-white"
                   >
+                    <svg
+                      aria-hidden="true"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="profile-navigation-icon size-5 shrink-0"
+                    >
+                      <path d={icon} />
+                    </svg>
                     {label}
                   </Link>
                 ))}
               </nav>
-              <button
-                type="button"
-                onClick={handleLogout}
-                className="w-full rounded-xl border-t border-white/10 px-3 py-3 text-left text-sm font-semibold text-rose-200 transition hover:bg-rose-300/10"
-              >
-                Log out
-              </button>
+              <div className="mt-1 border-t border-white/10 pt-2">
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="flex h-11 w-full items-center gap-3 rounded-xl px-3 text-left text-sm font-medium text-white/65 transition hover:bg-rose-300/10 hover:text-rose-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-300"
+                >
+                  <svg
+                    aria-hidden="true"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="size-5 shrink-0"
+                  >
+                    <path d="M10 17l5-5-5-5m5 5H3m9-9h6a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-6" />
+                  </svg>
+                  Log out
+                </button>
+              </div>
             </div>
           </details>
         ) : status === "unauthenticated" ? (
@@ -125,9 +179,21 @@ export default function Navbar() {
             <Link
               key={href}
               href={href}
-              className="flex items-center rounded-full px-3 py-1.5 text-xs font-semibold text-white/75 transition hover:bg-white/10 hover:text-white"
+              className="navbar-events-button flex px-3 py-1.5 text-xs font-semibold"
             >
-              {label}
+              <span className="relative z-10">{label}</span>
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                className="navbar-events-icon relative z-10 size-4 shrink-0"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zm4.28 10.28a.75.75 0 0 0 0-1.06l-3-3a.75.75 0 1 0-1.06 1.06l1.72 1.72H8.25a.75.75 0 0 0 0 1.5h5.69l-1.72 1.72a.75.75 0 1 0 1.06 1.06l3-3z"
+                  clipRule="evenodd"
+                />
+              </svg>
             </Link>
           ))}
         </div>

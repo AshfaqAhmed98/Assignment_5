@@ -13,19 +13,14 @@ import {
 import { createEvent } from "@/lib/event-api";
 import { getAccessToken } from "@/lib/auth";
 import { eventTypes } from "@/lib/events";
-
-function getLocalDateTimeMinimum() {
-  const now = new Date();
-  now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-  return now.toISOString().slice(0, 16);
-}
+import EventDateTimePicker from "@/components/event-date-time-picker";
+import EventTypeSelect from "@/components/event-type-select";
 
 const fieldClassName =
   "mt-2 w-full rounded-xl border border-white/10 bg-[#111019] px-4 py-3 text-sm text-white outline-none transition placeholder:text-white/40 focus:border-violet-400 focus:ring-4 focus:ring-violet-400/15 disabled:cursor-not-allowed disabled:bg-white/5 disabled:opacity-60";
 
 export default function CreateEventForm() {
   const router = useRouter();
-  const [minimumDate, setMinimumDate] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [thumbnailMode, setThumbnailMode] = useState<"url" | "upload">("url");
@@ -44,10 +39,6 @@ export default function CreateEventForm() {
     },
     [thumbnailPreview],
   );
-
-  function updateMinimumDate() {
-    setMinimumDate(getLocalDateTimeMinimum());
-  }
 
   function handleThumbnailFileChange(event: ChangeEvent<HTMLInputElement>) {
     const file = event.currentTarget.files?.[0];
@@ -127,7 +118,6 @@ export default function CreateEventForm() {
 
     if (parsedEventDate.getTime() <= Date.now()) {
       setErrorMessage("Choose a date and time in the future.");
-      updateMinimumDate();
       return;
     }
 
@@ -262,23 +252,12 @@ export default function CreateEventForm() {
                 />
               </label>
 
-              <label className="text-sm font-semibold text-white/90">
+              <label
+                htmlFor="create-event-type"
+                className="text-sm font-semibold text-white/90"
+              >
                 Event type
-                <select
-                  className={fieldClassName}
-                  name="type"
-                  required
-                  defaultValue=""
-                >
-                  <option value="" disabled className="bg-[#171421]">
-                    Choose a type
-                  </option>
-                  {eventTypes.map((type) => (
-                    <option key={type} value={type} className="bg-[#171421]">
-                      {type}
-                    </option>
-                  ))}
-                </select>
+                <EventTypeSelect id="create-event-type" name="type" />
               </label>
 
               <label className="text-sm font-semibold text-white/90">
@@ -292,16 +271,14 @@ export default function CreateEventForm() {
                 />
               </label>
 
-              <label className="text-sm font-semibold text-white/90">
+              <label
+                htmlFor="create-event-date"
+                className="text-sm font-semibold text-white/90"
+              >
                 Event date and time
-                <input
-                  className={`${fieldClassName} [color-scheme:dark]`}
+                <EventDateTimePicker
+                  id="create-event-date"
                   name="eventDate"
-                  type="datetime-local"
-                  min={minimumDate}
-                  onFocus={updateMinimumDate}
-                  onChange={updateMinimumDate}
-                  required
                 />
               </label>
 

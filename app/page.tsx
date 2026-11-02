@@ -568,12 +568,6 @@ export default function Home() {
                 </figcaption>
               </figure>
             ))}
-            <Link
-              href="/events"
-              className="gallery-cta col-span-2 inline-flex min-h-10 w-fit justify-self-end items-center justify-center rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 px-5 text-xs font-bold uppercase tracking-wide text-white transition hover:-translate-y-0.5 hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fuchsia-300 lg:absolute lg:bottom-0 lg:right-0 lg:col-span-1"
-            >
-              View events
-            </Link>
           </div>
           <p className="text-right text-xs text-white/40 lg:col-start-2">
             Photos via{" "}
@@ -586,6 +580,72 @@ export default function Home() {
               Unsplash
             </a>
           </p>
+        </div>
+      </section>
+
+      <section
+        id="newsletter"
+        aria-labelledby="newsletter-heading"
+        className="relative isolate overflow-hidden bg-[#100d19] px-5 py-16 text-white sm:px-8 sm:py-20"
+      >
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 -z-10 overflow-hidden"
+        >
+          <div className="absolute -left-24 top-1/2 size-72 -translate-y-1/2 rounded-full bg-violet-600/20 blur-[100px]" />
+          <div className="absolute -right-20 top-0 size-80 rounded-full bg-cyan-500/10 blur-[110px]" />
+        </div>
+        <div className="mx-auto grid max-w-6xl gap-10 rounded-3xl border border-white/10 bg-white/[0.035] p-6 shadow-[0_24px_70px_rgba(0,0,0,0.28)] sm:p-9 lg:grid-cols-[1fr_0.85fr] lg:items-center lg:gap-14 lg:p-12">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-200">
+              A good thing in your inbox
+            </p>
+            <h2
+              id="newsletter-heading"
+              className="mt-3 text-3xl font-extrabold tracking-tight sm:text-4xl"
+            >
+              Good things grow{" "}
+              <span className="bg-gradient-to-r from-violet-300 to-cyan-200 bg-clip-text text-transparent">
+                when we share.
+              </span>
+            </h2>
+            <p className="mt-4 max-w-xl text-sm leading-7 text-white/60 sm:text-base">
+              Get a friendly roundup of upcoming community events, local
+              projects, and small ways to make a difference.
+            </p>
+          </div>
+
+          <form
+            className="newsletter-form"
+            onSubmit={(event) => event.preventDefault()}
+          >
+            <label
+              htmlFor="newsletter-email"
+              className="mb-2 block text-sm font-semibold text-white/85"
+            >
+              Email address
+            </label>
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <input
+                id="newsletter-email"
+                name="email"
+                type="email"
+                autoComplete="email"
+                placeholder="you@example.com"
+                className="newsletter-input min-h-12 min-w-0 flex-1 rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-sm text-white outline-none transition placeholder:text-white/35 focus:border-violet-300/70 focus:ring-4 focus:ring-violet-400/10"
+              />
+              <button
+                type="submit"
+                className="min-h-12 shrink-0 rounded-xl bg-gradient-to-r from-violet-600 to-cyan-600 px-6 text-sm font-bold text-white shadow-[0_8px_24px_rgba(124,58,237,0.22)] transition hover:-translate-y-0.5 hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-200"
+              >
+                Stay in the loop
+              </button>
+            </div>
+            <p className="mt-3 text-xs leading-5 text-white/40">
+              A little inspiration for your community. No spam, just good
+              things.
+            </p>
+          </form>
         </div>
       </section>
     </main>

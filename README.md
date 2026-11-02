@@ -25,6 +25,11 @@ The frontend proxies `/backend/*` requests to `http://localhost:3001` by
 default. Set `BACKEND_URL` in the frontend environment if the backend uses a
 different origin.
 
+The homepage includes upcoming community events, a volunteer photo gallery, and
+a newsletter signup design. The newsletter form is visual only and does not
+submit or store email addresses. A shared footer provides navigation and
+project information across routes.
+
 Google sign-in uses Google Identity Services. Set
 `NEXT_PUBLIC_GOOGLE_CLIENT_ID` in `Frontend/.env.local` to the same web client
 ID as `GOOGLE_CLIENT_ID` in `Backend/.env.local`, then restart the frontend.

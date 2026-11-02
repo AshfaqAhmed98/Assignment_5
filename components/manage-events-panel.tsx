@@ -13,6 +13,8 @@ import {
   eventTypes,
   type ManagedEvent,
 } from "@/lib/events";
+import EventDateTimePicker from "@/components/event-date-time-picker";
+import EventTypeSelect from "@/components/event-type-select";
 
 export type { ManagedEvent } from "@/lib/events";
 
@@ -136,7 +138,7 @@ function EventEditor({
   const eventDate = new Date(event.eventDate);
 
   return (
-    <article className="overflow-hidden rounded-2xl border border-white/10 bg-[#171421]">
+    <article className="rounded-2xl border border-white/10 bg-[#171421]">
       {!isEditing ? (
         <div className="grid gap-5 p-4 sm:grid-cols-[220px_1fr] sm:p-5">
           <div className="relative aspect-[16/10] overflow-hidden rounded-xl border border-white/10 bg-white/5">
@@ -214,20 +216,16 @@ function EventEditor({
             />
           </label>
 
-          <label className="text-sm font-semibold text-white/85">
+          <label
+            htmlFor={`manage-event-type-${event.id}`}
+            className="text-sm font-semibold text-white/85"
+          >
             Event type
-            <select
-              className={fieldClassName}
+            <EventTypeSelect
+              id={`manage-event-type-${event.id}`}
               name="type"
-              required
               defaultValue={event.type}
-            >
-              {eventTypes.map((type) => (
-                <option key={type} value={type} className="bg-[#171421]">
-                  {type}
-                </option>
-              ))}
-            </select>
+            />
           </label>
 
           <label className="text-sm font-semibold text-white/85">
@@ -241,13 +239,14 @@ function EventEditor({
             />
           </label>
 
-          <label className="text-sm font-semibold text-white/85">
+          <label
+            htmlFor={`manage-event-date-${event.id}`}
+            className="text-sm font-semibold text-white/85"
+          >
             Event date and time
-            <input
-              className={`${fieldClassName} [color-scheme:dark]`}
+            <EventDateTimePicker
+              id={`manage-event-date-${event.id}`}
               name="eventDate"
-              type="datetime-local"
-              required
               defaultValue={toLocalDateTime(event.eventDate)}
             />
           </label>
