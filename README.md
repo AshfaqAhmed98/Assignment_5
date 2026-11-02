@@ -79,6 +79,10 @@ links to public event details. Signed-in users can join an event; each join stor
 event snapshot and the user's ID, name, and email in `eventJoins`, with a unique
 event/user index to prevent duplicate registrations. Creator and participant
 email addresses are not included in public event responses.
+Signed-in users can review their joined events at `/joined-events` and manage
+their own events at `/manage-events`. Event updates and deletions are restricted
+to the event creator; replacing or deleting an uploaded thumbnail removes its
+GridFS file.
 
 ## Project structure
 
@@ -87,9 +91,12 @@ email addresses are not included in public event responses.
 - `app/globals.css` — global styles
 - `app/api/auth/[...all]/route.ts` — Better Auth route handler
 - `app/api/events/route.ts` — event creation and upcoming events API
+- `app/api/events/[id]/route.ts` — owner-only event update and deletion
 - `app/api/events/[id]/join/route.ts` — authenticated event joining API
 - `app/events/page.tsx` — public upcoming events directory
 - `app/events/[id]/page.tsx` — public event details and join action
+- `app/(protected)/joined-events/page.tsx` — signed-in user's joined events
+- `app/(protected)/manage-events/page.tsx` — signed-in user's event management
 - `app/create-event/page.tsx` — authenticated event creation page
 - `server/auth.ts` — Better Auth and MongoDB configuration
 - `postcss.config.mjs` — Tailwind CSS PostCSS integration

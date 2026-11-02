@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { connection } from "next/server";
 import { Suspense } from "react";
 import EventCard, { type PublicEvent } from "@/components/event-card";
 import { getUpcomingEvents } from "@/server/event-queries";
@@ -18,6 +19,8 @@ export default function UpcomingEventsPage() {
 }
 
 async function UpcomingEventsList() {
+  await connection();
+
   let events: PublicEvent[];
 
   try {

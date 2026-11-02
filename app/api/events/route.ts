@@ -1,13 +1,15 @@
-import { pipeline } from "node:stream/promises";
-import { Readable } from "node:stream";
 import {
   auth,
   connectMongo,
-  eventImagesBucket,
   eventsCollection,
 } from "@/server/auth";
 import { eventTypes, type EventType } from "@/server/events";
 import { getUpcomingEvents } from "@/server/event-queries";
+import {
+  deleteStoredEventThumbnail,
+  storeEventThumbnail,
+  validateEventThumbnail,
+} from "@/server/event-thumbnails";
 
 function jsonError(message: string, status: number) {
   return Response.json({ error: message }, { status });
@@ -20,23 +22,6 @@ function isEventType(value: unknown): value is EventType {
 function getStringField(formData: FormData, name: string) {
   const value = formData.get(name);
   return typeof value === "string" ? value.trim() : "";
-}
-
-async function* readFileChunks(file: File): AsyncGenerator<Uint8Array> {
-  const reader = file.stream().getReader();
-
-  try {
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) {
-        return;
-      }
-
-      yield value;
-    }
-  } finally {
-    reader.releaseLock();
-  }
 }
 
 export async function GET() {
@@ -114,41 +99,9 @@ export async function POST(request: Request) {
   }
 
   if (uploadedThumbnail) {
-    const hasSupportedExtension = /\.(jpe?g|png)$/i.test(uploadedThumbnail.name);
-    const hasSupportedType = ["image/jpeg", "image/png"].includes(
-      uploadedThumbnail.type,
-    );
-
-    if (!hasSupportedExtension || !hasSupportedType) {
-      return jsonError("Upload a valid JPG or PNG thumbnail image.", 400);
-    }
-
-    if (uploadedThumbnail.size > 50 * 1024 * 1024) {
-      return jsonError("Thumbnail images must be 50 MB or smaller.", 413);
-    }
-
-    const signature = new Uint8Array(
-      await uploadedThumbnail.slice(0, 8).arrayBuffer(),
-    );
-    const isJpeg =
-      uploadedThumbnail.type === "image/jpeg" &&
-      signature[0] === 0xff &&
-      signature[1] === 0xd8 &&
-      signature[2] === 0xff;
-    const isPng =
-      uploadedThumbnail.type === "image/png" &&
-      signature.length === 8 &&
-      signature[0] === 0x89 &&
-      signature[1] === 0x50 &&
-      signature[2] === 0x4e &&
-      signature[3] === 0x47 &&
-      signature[4] === 0x0d &&
-      signature[5] === 0x0a &&
-      signature[6] === 0x1a &&
-      signature[7] === 0x0a;
-
-    if (!isJpeg && !isPng) {
-      return jsonError("The uploaded file is not a valid JPG or PNG image.", 400);
+    const validation = await validateEventThumbnail(uploadedThumbnail);
+    if (validation) {
+      return jsonError(validation.message, validation.status);
     }
   } else {
     if (!thumbnailUrl || thumbnailUrl.length > 2048) {
@@ -182,29 +135,14 @@ export async function POST(request: Request) {
   }
 
   let storedThumbnailUrl = thumbnailUrl;
-  let uploadedImageId: ReturnType<typeof eventImagesBucket.openUploadStream>["id"] | null =
-    null;
 
   if (uploadedThumbnail) {
-    const uploadStream = eventImagesBucket.openUploadStream(
-      uploadedThumbnail.name,
-      {
-        metadata: { contentType: uploadedThumbnail.type },
-      },
-    );
-    uploadedImageId = uploadStream.id;
-
     try {
-      await pipeline(
-        Readable.from(readFileChunks(uploadedThumbnail)),
-        uploadStream,
-      );
+      storedThumbnailUrl = await storeEventThumbnail(uploadedThumbnail);
     } catch (error) {
       console.error("Unable to store event thumbnail:", error);
       return jsonError("Unable to store the thumbnail image. Please try again.", 500);
     }
-
-    storedThumbnailUrl = `/api/events/images/${uploadedImageId.toString()}`;
   }
 
   try {
@@ -225,9 +163,9 @@ export async function POST(request: Request) {
     );
   } catch (error) {
     console.error("Unable to create event:", error);
-    if (uploadedImageId) {
+    if (uploadedThumbnail && storedThumbnailUrl !== thumbnailUrl) {
       try {
-        await eventImagesBucket.delete(uploadedImageId);
+        await deleteStoredEventThumbnail(storedThumbnailUrl);
       } catch (cleanupError) {
         console.error("Unable to remove unreferenced event thumbnail:", cleanupError);
       }

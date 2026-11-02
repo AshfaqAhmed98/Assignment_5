@@ -11,7 +11,13 @@ export type PublicEvent = {
   eventDate: string;
 };
 
-export default function EventCard({ event }: { event: PublicEvent }) {
+export default function EventCard({
+  event,
+  detailsHref,
+}: {
+  event: PublicEvent;
+  detailsHref?: string | null;
+}) {
   const eventDate = new Date(event.eventDate);
 
   return (
@@ -67,12 +73,18 @@ export default function EventCard({ event }: { event: PublicEvent }) {
             })}
           </p>
         </div>
-        <Link
-          href={`/events/${event.id}`}
-          className="mt-5 inline-flex min-h-11 items-center justify-center rounded-full border border-violet-200/25 bg-violet-300/10 px-5 text-sm font-bold text-violet-100 transition hover:border-fuchsia-200/50 hover:bg-fuchsia-300/15 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fuchsia-200"
-        >
-          View Event
-        </Link>
+        {detailsHref === null ? (
+          <p className="mt-5 text-center text-xs text-white/40">
+            This event is no longer available.
+          </p>
+        ) : (
+          <Link
+            href={detailsHref ?? `/events/${event.id}`}
+            className="mt-5 inline-flex min-h-11 items-center justify-center rounded-full border border-violet-200/25 bg-violet-300/10 px-5 text-sm font-bold text-violet-100 transition hover:border-fuchsia-200/50 hover:bg-fuchsia-300/15 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fuchsia-200"
+          >
+            View Event
+          </Link>
+        )}
       </div>
     </article>
   );
