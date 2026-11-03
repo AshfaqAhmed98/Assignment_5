@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import EventDetailsClient from "@/components/event-details";
+import EventDetailsSkeleton from "@/components/event-details-skeleton";
 
 export default function EventDetailsPage({
   params,
@@ -8,11 +9,7 @@ export default function EventDetailsPage({
 }) {
   return (
     <Suspense
-      fallback={
-        <main className="flex flex-1 items-center justify-center bg-[#0b0b12] px-5 py-20 text-sm text-white/60">
-          Loading event details…
-        </main>
-      }
+      fallback={<EventDetailsSkeleton />}
     >
       <LoadEventDetails params={params} />
     </Suspense>

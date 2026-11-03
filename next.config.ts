@@ -5,7 +5,11 @@ const nextConfig: NextConfig = {
   cacheComponents: true,
   partialPrefetching: true,
   async rewrites() {
-    const backendUrl = process.env.BACKEND_URL ?? "http://localhost:3001";
+    const backendUrl = (
+      process.env.BACKEND_URL ??
+      process.env.NEXT_PUBLIC_BACKEND_URL ??
+      "http://localhost:3001"
+    ).replace(/\/$/, "");
 
     return [
       {

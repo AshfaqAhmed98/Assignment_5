@@ -11,7 +11,6 @@ import {
   type FormEvent,
 } from "react";
 import AuthToast, { type AuthToastMessage } from "@/components/auth-toast";
-import GoogleAuthButton from "@/components/google-auth-button";
 import { useAuth } from "@/lib/auth";
 
 type RegistrationForm = {
@@ -22,7 +21,7 @@ type RegistrationForm = {
 };
 
 export default function RegisterPage() {
-  const { register, loginWithGoogle } = useAuth();
+  const { register } = useAuth();
   const router = useRouter();
   const [form, setForm] = useState<RegistrationForm>({
     name: "",
@@ -33,24 +32,14 @@ export default function RegisterPage() {
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [photoMode, setPhotoMode] = useState<"url" | "upload">("url");
   const [uploadedPhoto, setUploadedPhoto] = useState("");
+  const [uploadedPhotoFile, setUploadedPhotoFile] = useState<File | null>(null);
   const [photoFileName, setPhotoFileName] = useState("");
+  const [photoPreviewFailed, setPhotoPreviewFailed] = useState(false);
   const [isPhotoMenuOpen, setIsPhotoMenuOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [toast, setToast] = useState<AuthToastMessage | null>(null);
   const dismissToast = useCallback(() => setToast(null), []);
   const photoFileInputRef = useRef<HTMLInputElement>(null);
-
-  async function handleGoogleSignUp(credential: string) {
-    setIsSubmitting(true);
-    setToast(null);
-
-    try {
-      await loginWithGoogle(credential);
-      router.replace("/events");
-    } finally {
-      setIsSubmitting(false);
-    }
-  }
 
   function handlePhotoFileChange(event: ChangeEvent<HTMLInputElement>) {
     const file = event.currentTarget.files?.[0];
@@ -81,7 +70,9 @@ export default function RegisterPage() {
       }
 
       setUploadedPhoto(reader.result);
+      setUploadedPhotoFile(file);
       setPhotoFileName(file.name);
+      setPhotoPreviewFailed(false);
       setForm((current) => ({ ...current, photoURL: "" }));
       setPhotoMode("upload");
       setToast(null);
@@ -101,58 +92,83 @@ export default function RegisterPage() {
     const formElement = event.currentTarget;
     const emailInput = formElement.elements.namedItem("email");
     const photoUrlInput = formElement.elements.namedItem("photoURL");
+    const photoURL = form.photoURL.trim();
 
-    if (!form.name.trim()) {
-      setToast({ type: "error", message: "Please enter your name." });
+    const name = form.name.trim();
+    if (!name || name.length > 80) {
+      setToast({
+        type: "error",
+        message: "Name is required and must be 80 characters or fewer.",
+      });
       return;
     }
 
     if (
       !(emailInput instanceof HTMLInputElement) ||
-      !emailInput.validity.valid
+      !emailInput.validity.valid ||
+      emailInput.value.trim().length > 254
     ) {
       setToast({ type: "error", message: "Please enter a valid email address." });
       return;
     }
 
-    if (photoMode === "url" && (
-      !(photoUrlInput instanceof HTMLInputElement) ||
-      !photoUrlInput.validity.valid
-    )) {
-      setToast({
-        type: "error",
-        message: "Please enter a valid photo URL starting with http:// or https://.",
-      });
-      return;
+    if (photoMode === "url" && photoURL) {
+      if (
+        !(photoUrlInput instanceof HTMLInputElement) ||
+        !photoUrlInput.validity.valid
+      ) {
+        setToast({
+          type: "error",
+          message: "Please enter a valid profile photo URL.",
+        });
+        return;
+      }
+
+      try {
+        const photoUrl = new URL(photoURL);
+        if (!["http:", "https:"].includes(photoUrl.protocol)) {
+          throw new Error("Unsupported profile photo URL protocol.");
+        }
+      } catch {
+        setToast({
+          type: "error",
+          message: "Profile photo URLs must start with http:// or https://.",
+        });
+        return;
+      }
     }
 
-    if (photoMode === "upload" && !uploadedPhoto) {
+    if (photoMode === "upload" && !uploadedPhotoFile) {
       setToast({ type: "error", message: "Choose a JPG or PNG profile photo." });
       return;
     }
 
-    const passwordRequirements = [
-      { valid: form.password.length >= 8, label: "at least 8 characters" },
-    ];
-    const unmetRequirements = passwordRequirements
-      .filter((requirement) => !requirement.valid)
-      .map((requirement) => requirement.label);
-
-    if (unmetRequirements.length > 0) {
+    if (
+      form.password.length < 6 ||
+      form.password.length > 128 ||
+      !/[A-Z]/.test(form.password) ||
+      !/[a-z]/.test(form.password)
+    ) {
       setToast({
         type: "error",
-        message: `Password must include ${unmetRequirements.join(", ")}.`,
+        message:
+          "Password must be 6–128 characters and include an uppercase and a lowercase letter.",
       });
       return;
     }
 
     setIsSubmitting(true);
     try {
-      await register(form.name.trim(), form.email.trim(), form.password);
+      await register(
+        name,
+        form.email.trim(),
+        form.password,
+        photoMode === "url" ? form.photoURL.trim() : undefined,
+        photoMode === "upload" ? uploadedPhotoFile ?? undefined : undefined,
+      );
       setToast({
         type: "success",
-        message:
-          "Account created. Profile photos are preview-only and are not saved yet.",
+        message: "Account created successfully.",
       });
       router.replace("/events");
     } catch (error) {
@@ -167,8 +183,31 @@ export default function RegisterPage() {
   }
 
   const passwordChecks = [
-    { label: "At least 8 characters", valid: form.password.length >= 8 },
+    { label: "At least 6 characters", valid: form.password.length >= 6 },
+    { label: "One uppercase letter", valid: /[A-Z]/.test(form.password) },
+    { label: "One lowercase letter", valid: /[a-z]/.test(form.password) },
+    { label: "No more than 128 characters", valid: form.password.length <= 128 },
   ];
+  let photoPreview = uploadedPhoto;
+  if (!photoPreview && form.photoURL.trim()) {
+    try {
+      const photoURL = new URL(form.photoURL.trim());
+      if (["http:", "https:"].includes(photoURL.protocol)) {
+        photoPreview = photoURL.toString();
+      }
+    } catch {
+      photoPreview = "";
+    }
+  }
+
+  function removePhoto() {
+    setUploadedPhoto("");
+    setUploadedPhotoFile(null);
+    setPhotoFileName("");
+    setPhotoPreviewFailed(false);
+    setPhotoMode("url");
+    setForm((current) => ({ ...current, photoURL: "" }));
+  }
 
   return (
     <main className="relative flex flex-1 items-center justify-center overflow-hidden bg-[#0b0b12] px-4 py-10 sm:px-6 sm:py-12">
@@ -194,20 +233,6 @@ export default function RegisterPage() {
           </p>
         </div>
 
-        <GoogleAuthButton
-          action="signup"
-          disabled={isSubmitting}
-          onCredential={handleGoogleSignUp}
-          onError={(message) => setToast({ type: "error", message })}
-        />
-        <div className="my-5 flex items-center gap-4">
-          <span className="h-px flex-1 bg-white/10" />
-          <span className="text-xs font-medium uppercase tracking-[0.12em] text-white/35">
-            or with email
-          </span>
-          <span className="h-px flex-1 bg-white/10" />
-        </div>
-
         <form onSubmit={handleSubmit} noValidate className="space-y-4">
           <div>
             <label
@@ -222,6 +247,7 @@ export default function RegisterPage() {
               type="text"
               autoComplete="name"
               required
+              maxLength={80}
               value={form.name}
               onChange={(event) => updateField("name", event.target.value)}
               placeholder="Your name"
@@ -242,6 +268,7 @@ export default function RegisterPage() {
               type="email"
               autoComplete="email"
               required
+              maxLength={254}
               value={form.email}
               onChange={(event) => updateField("email", event.target.value)}
               placeholder="you@example.com"
@@ -272,12 +299,14 @@ export default function RegisterPage() {
                 name="photoURL"
                 type="url"
                 autoComplete="url"
-                required={photoMode === "url"}
+                maxLength={2048}
                 value={form.photoURL}
                 onChange={(event) => {
                   updateField("photoURL", event.target.value);
                   setUploadedPhoto("");
+                  setUploadedPhotoFile(null);
                   setPhotoFileName("");
+                  setPhotoPreviewFailed(false);
                   setPhotoMode("url");
                 }}
                 placeholder="https://example.com/photo.jpg"
@@ -309,7 +338,9 @@ export default function RegisterPage() {
                     onClick={() => {
                       setPhotoMode("url");
                       setUploadedPhoto("");
+                      setUploadedPhotoFile(null);
                       setPhotoFileName("");
+                      setPhotoPreviewFailed(false);
                       setIsPhotoMenuOpen(false);
                     }}
                     className="flex w-full items-center rounded-lg px-3 py-2.5 text-left text-sm font-medium text-white/85 transition hover:bg-violet-400/15 hover:text-white"
@@ -340,25 +371,45 @@ export default function RegisterPage() {
               tabIndex={-1}
               aria-label="Upload a JPG or PNG profile photo"
             />
-            {uploadedPhoto ? (
-              <div className="group relative mt-3 flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.04] p-2.5">
-                <Image
-                  src={uploadedPhoto}
-                  alt="Selected profile photo preview"
-                  width={48}
-                  height={48}
-                  unoptimized
-                  className="size-12 rounded-lg object-cover"
-                />
+            {photoPreview && (
+              <div className="mt-3 flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.04] p-3">
+                {photoPreviewFailed ? (
+                  <div className="flex size-16 shrink-0 items-center justify-center rounded-full bg-white/10 text-xs text-white/55">
+                    Preview unavailable
+                  </div>
+                ) : (
+                  <Image
+                    key={photoPreview}
+                    src={photoPreview}
+                    alt="Profile photo preview"
+                    width={64}
+                    height={64}
+                    unoptimized
+                    onError={() => setPhotoPreviewFailed(true)}
+                    className="size-16 shrink-0 rounded-full object-cover ring-2 ring-fuchsia-300/50"
+                  />
+                )}
                 <span className="min-w-0 flex-1 truncate text-xs text-white/70">
-                  {photoFileName}
+                  {photoFileName || "Profile photo preview"}
                 </span>
+                <button
+                  type="button"
+                  onClick={removePhoto}
+                  aria-label="Remove profile photo"
+                  title="Remove profile photo"
+                  className="flex size-8 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/[0.06] text-white/65 transition hover:border-rose-300/40 hover:bg-rose-400/15 hover:text-rose-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fuchsia-300"
+                >
+                  <svg aria-hidden="true" viewBox="0 0 20 20" fill="currentColor" className="size-4">
+                    <path d="M5.28 5.28a.75.75 0 0 1 1.06 0L10 8.94l3.66-3.66a.75.75 0 1 1 1.06 1.06L11.06 10l3.66 3.66a.75.75 0 1 1-1.06 1.06L10 11.06l-3.66 3.66a.75.75 0 1 1-1.06-1.06L8.94 10 5.28 6.34a.75.75 0 0 1 0-1.06Z" />
+                  </svg>
+                </button>
               </div>
-            ) : (
-              <p className="mt-1.5 text-xs text-white/45">
-                Use the dropdown button to choose a JPG or PNG, or enter a public image URL.
-              </p>
             )}
+            <p className="mt-1.5 text-xs text-white/45">
+              {uploadedPhoto
+                ? "This photo will be saved to your profile and shown in the navbar."
+                : "Optional: enter a public image URL or upload a JPG or PNG profile photo."}
+            </p>
           </div>
 
           <div>
@@ -375,6 +426,8 @@ export default function RegisterPage() {
                 type={passwordVisible ? "text" : "password"}
                 autoComplete="new-password"
                 required
+                minLength={6}
+                maxLength={128}
                 value={form.password}
                 onChange={(event) => updateField("password", event.target.value)}
                 placeholder="Create a password"
@@ -393,7 +446,7 @@ export default function RegisterPage() {
             </div>
             <ul
               id="password-requirements"
-              className="mt-3 grid gap-1.5 text-xs sm:grid-cols-3"
+              className="mt-3 grid gap-1.5 text-xs sm:grid-cols-2"
               aria-label="Password requirements"
             >
               {passwordChecks.map((requirement) => (

@@ -1,4 +1,6 @@
+import { Suspense } from "react";
 import Link from "next/link";
+import EventCreatedNotice from "@/components/event-created-notice";
 import UpcomingEventsGrid from "@/components/upcoming-events-grid";
 
 export default function UpcomingEventsPage() {
@@ -32,7 +34,14 @@ export default function UpcomingEventsPage() {
           </Link>
         </div>
 
-        <UpcomingEventsGrid limit={100} />
+        <Suspense fallback={null}>
+          <EventCreatedNotice />
+        </Suspense>
+        <UpcomingEventsGrid
+          limit={12}
+          cardVariant="neon"
+          showPagination
+        />
       </section>
     </main>
   );

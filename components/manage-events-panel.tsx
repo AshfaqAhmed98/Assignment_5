@@ -2,7 +2,13 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState, type FormEvent } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type FormEvent,
+} from "react";
 import { getAccessToken } from "@/lib/auth";
 import {
   deleteEvent,
@@ -14,6 +20,7 @@ import {
   type ManagedEvent,
 } from "@/lib/events";
 import EventDateTimePicker from "@/components/event-date-time-picker";
+import EventListSkeleton from "@/components/event-list-skeleton";
 import EventTypeSelect from "@/components/event-type-select";
 
 export type { ManagedEvent } from "@/lib/events";
@@ -41,15 +48,90 @@ function EventEditor({
   const [successMessage, setSuccessMessage] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [thumbnailMode, setThumbnailMode] = useState<"url" | "upload">("url");
+  const [thumbnailUrl, setThumbnailUrl] = useState(event.thumbnailUrl);
+  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
+  const [thumbnailPreview, setThumbnailPreview] = useState("");
+  const [thumbnailFileName, setThumbnailFileName] = useState("");
+  const [isThumbnailMenuOpen, setIsThumbnailMenuOpen] = useState(false);
+  const thumbnailFileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(
+    () => () => {
+      if (thumbnailPreview) {
+        URL.revokeObjectURL(thumbnailPreview);
+      }
+    },
+    [thumbnailPreview],
+  );
+
+  function handleThumbnailFileChange(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.currentTarget.files?.[0];
+    event.currentTarget.value = "";
+
+    if (!file) {
+      return;
+    }
+
+    const hasSupportedExtension = /\.(jpe?g|png)$/i.test(file.name);
+    const hasSupportedType = ["image/jpeg", "image/png"].includes(file.type);
+    if (!hasSupportedExtension || !hasSupportedType) {
+      setErrorMessage("Choose a JPG or PNG thumbnail image.");
+      return;
+    }
+
+    if (file.size > 50 * 1024 * 1024) {
+      setErrorMessage("Thumbnail images must be 50 MB or smaller.");
+      return;
+    }
+
+    setThumbnailFile(file);
+    setThumbnailPreview(URL.createObjectURL(file));
+    setThumbnailFileName(file.name);
+    setErrorMessage("");
+  }
 
   async function handleSubmit(formEvent: FormEvent<HTMLFormElement>) {
     formEvent.preventDefault();
     setErrorMessage("");
     setSuccessMessage("");
     const formData = new FormData(formEvent.currentTarget);
+    const title = String(formData.get("title") ?? "").trim();
+    const description = String(formData.get("description") ?? "").trim();
+    const location = String(formData.get("location") ?? "").trim();
     const localEventDate = String(formData.get("eventDate") ?? "");
     const parsedEventDate = new Date(localEventDate);
-    const thumbnailUrl = String(formData.get("thumbnailUrl") ?? "").trim();
+    const isThumbnailUpload = thumbnailMode === "upload";
+    const thumbnailUrl = isThumbnailUpload
+      ? ""
+      : String(formData.get("thumbnailUrl") ?? "").trim();
+
+    if (!title || title.length > 120) {
+      setErrorMessage("Event title is required and must be 120 characters or fewer.");
+      return;
+    }
+
+    if (!location || location.length > 200) {
+      setErrorMessage("Location is required and must be 200 characters or fewer.");
+      return;
+    }
+
+    if (!description || description.length > 3000) {
+      setErrorMessage(
+        "Description is required and must be 3000 characters or fewer.",
+      );
+      return;
+    }
+
+    if (isThumbnailUpload && !thumbnailFile) {
+      setErrorMessage("Choose a JPG or PNG thumbnail image.");
+      return;
+    }
+
+    if (!isThumbnailUpload && (!thumbnailUrl || thumbnailUrl.length > 2048)) {
+      setErrorMessage("Thumbnail URL is required and must be 2048 characters or fewer.");
+      return;
+    }
 
     if (!localEventDate || Number.isNaN(parsedEventDate.getTime())) {
       setErrorMessage("Choose a valid event date and time.");
@@ -61,17 +143,21 @@ function EventEditor({
       return;
     }
 
-    let parsedThumbnailUrl: URL;
-    try {
-      parsedThumbnailUrl = new URL(thumbnailUrl);
-    } catch {
-      setErrorMessage("Enter a valid thumbnail URL.");
-      return;
-    }
+    let parsedThumbnailUrl = "";
+    if (!isThumbnailUpload) {
+      let parsedUrl: URL;
+      try {
+        parsedUrl = new URL(thumbnailUrl);
+      } catch {
+        setErrorMessage("Enter a valid thumbnail URL.");
+        return;
+      }
 
-    if (!["http:", "https:"].includes(parsedThumbnailUrl.protocol)) {
-      setErrorMessage("Thumbnail URLs must use HTTP or HTTPS.");
-      return;
+      if (!["http:", "https:"].includes(parsedUrl.protocol)) {
+        setErrorMessage("Thumbnail URLs must use HTTP or HTTPS.");
+        return;
+      }
+      parsedThumbnailUrl = parsedUrl.toString();
     }
 
     const typeValue = String(formData.get("type") ?? "");
@@ -90,14 +176,19 @@ function EventEditor({
     setIsSaving(true);
     try {
       const updatedEvent = await updateEvent(token, event.id, {
-        title: String(formData.get("title") ?? "").trim(),
-        description: String(formData.get("description") ?? "").trim(),
+        title,
+        description,
         type: eventType,
-        thumbnailUrl: parsedThumbnailUrl.toString(),
-        location: String(formData.get("location") ?? "").trim(),
+        thumbnailUrl: parsedThumbnailUrl,
+        location,
         eventDate: parsedEventDate.toISOString(),
-      });
+      }, thumbnailFile ?? undefined);
       onUpdated(updatedEvent);
+      setThumbnailUrl(updatedEvent.thumbnailUrl);
+      setThumbnailFile(null);
+      setThumbnailPreview("");
+      setThumbnailFileName("");
+      setThumbnailMode("url");
       setSuccessMessage("Event updated successfully.");
       setIsEditing(false);
     } catch (error: unknown) {
@@ -177,6 +268,11 @@ function EventEditor({
                 onClick={() => {
                   setErrorMessage("");
                   setSuccessMessage("");
+                  setThumbnailUrl(event.thumbnailUrl);
+                  setThumbnailFile(null);
+                  setThumbnailPreview("");
+                  setThumbnailFileName("");
+                  setThumbnailMode("url");
                   setIsEditing(true);
                 }}
                 className="inline-flex min-h-10 items-center justify-center rounded-full border border-violet-200/25 bg-violet-300/10 px-4 text-sm font-bold text-violet-100 transition hover:bg-violet-300/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-200"
@@ -203,6 +299,7 @@ function EventEditor({
       ) : (
         <form
           onSubmit={handleSubmit}
+          noValidate
           className="grid gap-4 p-4 sm:grid-cols-2 sm:p-6"
         >
           <label className="text-sm font-semibold text-white/85">
@@ -212,6 +309,7 @@ function EventEditor({
               name="title"
               required
               maxLength={120}
+              minLength={1}
               defaultValue={event.title}
             />
           </label>
@@ -235,6 +333,7 @@ function EventEditor({
               name="location"
               required
               maxLength={200}
+              minLength={1}
               defaultValue={event.location}
             />
           </label>
@@ -251,17 +350,118 @@ function EventEditor({
             />
           </label>
 
-          <label className="text-sm font-semibold text-white/85 sm:col-span-2">
-            Thumbnail image URL
+          <div className="text-sm font-semibold text-white/85 sm:col-span-2">
+            <div className="mb-2 flex items-center justify-between gap-3">
+              <label htmlFor={`manage-thumbnail-url-${event.id}`}>
+                Thumbnail image
+              </label>
+              <span className="text-xs font-normal text-white/50">JPG or PNG</span>
+            </div>
+            <div className="relative">
+              {thumbnailMode === "url" ? (
+                <input
+                  id={`manage-thumbnail-url-${event.id}`}
+                  className={`${fieldClassName} pr-12`}
+                  name="thumbnailUrl"
+                  type="url"
+                  required
+                  maxLength={2048}
+                  autoComplete="off"
+                  value={thumbnailUrl}
+                  onChange={(inputEvent) => setThumbnailUrl(inputEvent.target.value)}
+                />
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => thumbnailFileInputRef.current?.click()}
+                  className={`${fieldClassName} flex min-h-12 items-center justify-between gap-3 pr-12 text-left`}
+                >
+                  <span className="truncate">
+                    {thumbnailFileName || "Choose a JPG or PNG image"}
+                  </span>
+                  {thumbnailPreview && (
+                    <Image
+                      src={thumbnailPreview}
+                      alt="Selected thumbnail preview"
+                      width={64}
+                      height={40}
+                      unoptimized
+                      className="h-10 w-16 shrink-0 rounded-lg object-cover"
+                    />
+                  )}
+                </button>
+              )}
+              <button
+                type="button"
+                aria-label="Choose thumbnail image source"
+                aria-haspopup="listbox"
+                aria-expanded={isThumbnailMenuOpen}
+                onClick={() => setIsThumbnailMenuOpen((open) => !open)}
+                className="absolute right-2 top-1/2 flex size-8 -translate-y-1/2 items-center justify-center rounded-lg text-white/55 transition hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-fuchsia-300"
+              >
+                <svg
+                  aria-hidden="true"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                  className={`size-4 transition-transform ${isThumbnailMenuOpen ? "rotate-180" : ""}`}
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M5.22 7.47a.75.75 0 0 1 1.06 0L10 11.19l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 8.53a.75.75 0 0 1 0-1.06Z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </button>
+              {isThumbnailMenuOpen && (
+                <div
+                  role="listbox"
+                  aria-label="Thumbnail image options"
+                  className="absolute right-0 top-full z-30 mt-2 w-full overflow-hidden rounded-xl border border-violet-300/20 bg-[#211b35] p-1.5 shadow-[0_16px_40px_rgba(0,0,0,0.5)]"
+                >
+                  <button
+                    type="button"
+                    role="option"
+                    aria-selected={thumbnailMode === "url"}
+                    onClick={() => {
+                      setThumbnailMode("url");
+                      setThumbnailFile(null);
+                      setThumbnailPreview("");
+                      setThumbnailFileName("");
+                      setIsThumbnailMenuOpen(false);
+                    }}
+                    className="flex w-full items-center rounded-lg px-3 py-2.5 text-left text-sm font-medium text-white/85 transition hover:bg-violet-400/15 hover:text-white"
+                  >
+                    Use an image URL
+                  </button>
+                  <button
+                    type="button"
+                    role="option"
+                    aria-selected={thumbnailMode === "upload"}
+                    onClick={() => {
+                      setThumbnailMode("upload");
+                      setIsThumbnailMenuOpen(false);
+                      thumbnailFileInputRef.current?.click();
+                    }}
+                    className="flex w-full items-center rounded-lg px-3 py-2.5 text-left text-sm font-medium text-white/85 transition hover:bg-fuchsia-400/15 hover:text-white"
+                  >
+                    Upload a JPG or PNG
+                  </button>
+                </div>
+              )}
+            </div>
             <input
-              className={fieldClassName}
-              name="thumbnailUrl"
-              type="url"
-              required
-              maxLength={2048}
-              defaultValue={event.thumbnailUrl}
+              ref={thumbnailFileInputRef}
+              type="file"
+              accept=".jpg,.jpeg,.png,image/jpeg,image/png"
+              onChange={handleThumbnailFileChange}
+              className="sr-only"
+              tabIndex={-1}
+              aria-label="Upload a JPG or PNG thumbnail"
             />
-          </label>
+            <span className="mt-1.5 block text-xs font-normal text-white/60">
+              Enter a public HTTP or HTTPS URL, or upload a JPG or PNG up to 50 MB.
+            </span>
+          </div>
 
           <label className="text-sm font-semibold text-white/85 sm:col-span-2">
             Description
@@ -270,6 +470,7 @@ function EventEditor({
               name="description"
               required
               maxLength={3000}
+              minLength={1}
               defaultValue={event.description}
             />
           </label>
@@ -414,9 +615,7 @@ export default function ManageEventsPanel() {
         </div>
 
         {isLoading ? (
-          <p role="status" className="text-sm text-white/60">
-            Loading your events…
-          </p>
+          <EventListSkeleton count={3} layout="rows" />
         ) : loadError ? (
           <p
             role="alert"

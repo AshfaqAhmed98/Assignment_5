@@ -28,8 +28,12 @@ export default function CreateEventForm() {
   const [uploadedThumbnail, setUploadedThumbnail] = useState<File | null>(null);
   const [thumbnailPreview, setThumbnailPreview] = useState("");
   const [thumbnailFileName, setThumbnailFileName] = useState("");
+  const [thumbnailPreviewFailed, setThumbnailPreviewFailed] = useState(false);
   const [isThumbnailMenuOpen, setIsThumbnailMenuOpen] = useState(false);
   const thumbnailFileInputRef = useRef<HTMLInputElement>(null);
+  const submissionRef = useRef<{ fingerprint: string; key: string } | null>(
+    null,
+  );
 
   useEffect(
     () => () => {
@@ -64,7 +68,18 @@ export default function CreateEventForm() {
     setUploadedThumbnail(file);
     setThumbnailPreview(URL.createObjectURL(file));
     setThumbnailFileName(file.name);
+    setThumbnailPreviewFailed(false);
     setThumbnailMode("upload");
+    setErrorMessage("");
+  }
+
+  function removeUploadedThumbnail() {
+    setUploadedThumbnail(null);
+    setThumbnailPreview("");
+    setThumbnailFileName("");
+    setThumbnailPreviewFailed(false);
+    setThumbnailMode("url");
+    setThumbnailUrl("");
     setErrorMessage("");
   }
 
@@ -73,42 +88,60 @@ export default function CreateEventForm() {
     setErrorMessage("");
 
     const formData = new FormData(event.currentTarget);
-    const thumbnailUrlInput = event.currentTarget.elements.namedItem("thumbnailUrl");
-    const localEventDate = String(formData.get("eventDate") ?? "");
-    const parsedEventDate = new Date(localEventDate);
-
-    if (thumbnailMode === "upload" && !uploadedThumbnail) {
-      setErrorMessage("Choose a JPG or PNG thumbnail image.");
+    const title = String(formData.get("title") ?? "").trim();
+    const description = String(formData.get("description") ?? "").trim();
+    const location = String(formData.get("location") ?? "").trim();
+    if (!title || title.length > 120) {
+      setErrorMessage("Event title is required and must be 120 characters or fewer.");
       return;
     }
 
-    if (thumbnailMode === "upload") {
+    if (!location || location.length > 200) {
+      setErrorMessage("Location is required and must be 200 characters or fewer.");
+      return;
+    }
+
+    if (!description || description.length > 3000) {
       setErrorMessage(
-        "Image uploads are not supported yet. Choose a public HTTP or HTTPS image URL instead.",
+        "Description is required and must be 3000 characters or fewer.",
       );
       return;
     }
 
-    if (
-      !(thumbnailUrlInput instanceof HTMLInputElement) ||
-      !thumbnailUrlInput.validity.valid
-    ) {
-      setErrorMessage("Enter a valid thumbnail URL.");
+    const isThumbnailUpload = thumbnailMode === "upload";
+    const thumbnailUrlInput =
+      event.currentTarget.elements.namedItem("thumbnailUrl");
+    const localEventDate = String(formData.get("eventDate") ?? "");
+    const parsedEventDate = new Date(localEventDate);
+
+    if (isThumbnailUpload && !uploadedThumbnail) {
+      setErrorMessage("Choose a JPG or PNG thumbnail image.");
       return;
     }
 
-    const formThumbnailUrl = String(formData.get("thumbnailUrl") ?? "").trim();
-    let parsedThumbnailUrl: URL;
-    try {
-      parsedThumbnailUrl = new URL(formThumbnailUrl);
-    } catch {
-      setErrorMessage("Enter a valid thumbnail URL.");
-      return;
-    }
+    let parsedThumbnailUrl = "";
+    if (!isThumbnailUpload) {
+      if (
+        !(thumbnailUrlInput instanceof HTMLInputElement) ||
+        !thumbnailUrlInput.validity.valid ||
+        thumbnailUrlInput.value.trim().length > 2048
+      ) {
+        setErrorMessage("Enter a valid thumbnail URL.");
+        return;
+      }
 
-    if (!["http:", "https:"].includes(parsedThumbnailUrl.protocol)) {
-      setErrorMessage("Thumbnail URLs must use HTTP or HTTPS.");
-      return;
+      const formThumbnailUrl = String(formData.get("thumbnailUrl") ?? "").trim();
+      try {
+        const parsedUrl = new URL(formThumbnailUrl);
+        if (!["http:", "https:"].includes(parsedUrl.protocol)) {
+          setErrorMessage("Thumbnail URLs must use HTTP or HTTPS.");
+          return;
+        }
+        parsedThumbnailUrl = parsedUrl.toString();
+      } catch {
+        setErrorMessage("Enter a valid thumbnail URL.");
+        return;
+      }
     }
 
     if (!localEventDate || Number.isNaN(parsedEventDate.getTime())) {
@@ -121,10 +154,7 @@ export default function CreateEventForm() {
       return;
     }
 
-    const title = String(formData.get("title") ?? "").trim();
-    const description = String(formData.get("description") ?? "").trim();
     const typeValue = String(formData.get("type") ?? "");
-    const location = String(formData.get("location") ?? "").trim();
     const eventType = eventTypes.find((type) => type === typeValue);
 
     if (!eventType) {
@@ -138,23 +168,63 @@ export default function CreateEventForm() {
       return;
     }
 
+    const eventDate = parsedEventDate.toISOString();
+    const fingerprint = JSON.stringify({
+      title,
+      description,
+      type: eventType,
+      location,
+      eventDate,
+      thumbnail: isThumbnailUpload
+        ? uploadedThumbnail && {
+            name: uploadedThumbnail.name,
+            size: uploadedThumbnail.size,
+            type: uploadedThumbnail.type,
+            lastModified: uploadedThumbnail.lastModified,
+          }
+        : parsedThumbnailUrl,
+    });
+    if (submissionRef.current?.fingerprint !== fingerprint) {
+      submissionRef.current = {
+        fingerprint,
+        key: globalThis.crypto.randomUUID(),
+      };
+    }
+
     setIsSubmitting(true);
     try {
-      const createdEvent = await createEvent(token, {
-        title,
-        description,
-        type: eventType,
-        thumbnailUrl: parsedThumbnailUrl.toString(),
-        location,
-        eventDate: parsedEventDate.toISOString(),
-      });
-      router.push(`/events/${encodeURIComponent(createdEvent.id)}`);
+      await createEvent(
+        token,
+        {
+          title,
+          description,
+          type: eventType,
+          thumbnailUrl: parsedThumbnailUrl,
+          location,
+          eventDate,
+        },
+        submissionRef.current.key,
+        isThumbnailUpload ? uploadedThumbnail ?? undefined : undefined,
+      );
+      router.push("/events?created=1");
     } catch (error: unknown) {
       setErrorMessage(
         error instanceof Error ? error.message : "Unable to create the event.",
       );
     } finally {
       setIsSubmitting(false);
+    }
+  }
+
+  let thumbnailImagePreview = uploadedThumbnail ? thumbnailPreview : "";
+  if (!thumbnailImagePreview && thumbnailUrl.trim()) {
+    try {
+      const parsedUrl = new URL(thumbnailUrl.trim());
+      if (["http:", "https:"].includes(parsedUrl.protocol)) {
+        thumbnailImagePreview = parsedUrl.toString();
+      }
+    } catch {
+      thumbnailImagePreview = "";
     }
   }
 
@@ -239,6 +309,8 @@ export default function CreateEventForm() {
 
             <form
               onSubmit={handleSubmit}
+              noValidate
+              autoComplete="off"
               className="mt-7 grid gap-x-5 gap-y-4 sm:grid-cols-2"
             >
               <label className="text-sm font-semibold text-white/90">
@@ -248,6 +320,8 @@ export default function CreateEventForm() {
                   name="title"
                   required
                   maxLength={120}
+                  minLength={1}
+                  autoComplete="off"
                   placeholder="e.g. Riverside Park Cleanup"
                 />
               </label>
@@ -267,6 +341,8 @@ export default function CreateEventForm() {
                   name="location"
                   required
                   maxLength={200}
+                  minLength={1}
+                  autoComplete="off"
                   placeholder="Venue or meeting point"
                 />
               </label>
@@ -308,6 +384,7 @@ export default function CreateEventForm() {
                     inputMode={thumbnailMode === "url" ? "url" : undefined}
                     required={thumbnailMode === "url"}
                     maxLength={2048}
+                    autoComplete="off"
                     value={thumbnailUrl}
                     onChange={(event) => {
                       setThumbnailUrl(event.target.value);
@@ -315,6 +392,7 @@ export default function CreateEventForm() {
                       setUploadedThumbnail(null);
                       setThumbnailPreview("");
                       setThumbnailFileName("");
+                      setThumbnailPreviewFailed(false);
                       setErrorMessage("");
                       event.currentTarget.setCustomValidity("");
                     }}
@@ -358,6 +436,7 @@ export default function CreateEventForm() {
                           setUploadedThumbnail(null);
                           setThumbnailPreview("");
                           setThumbnailFileName("");
+                          setThumbnailPreviewFailed(false);
                           setIsThumbnailMenuOpen(false);
                         }}
                         className="flex w-full items-center rounded-lg px-3 py-2.5 text-left text-sm font-medium text-white/85 transition hover:bg-violet-400/15 hover:text-white"
@@ -388,24 +467,43 @@ export default function CreateEventForm() {
                   tabIndex={-1}
                   aria-label="Upload a JPG or PNG thumbnail"
                 />
-                {uploadedThumbnail ? (
+                {thumbnailImagePreview ? (
                   <div className="mt-3 flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.04] p-2.5">
-                    <Image
-                      src={thumbnailPreview}
-                      alt="Selected event thumbnail preview"
-                      width={64}
-                      height={48}
-                      unoptimized
-                      className="h-12 w-16 rounded-lg object-cover"
-                    />
+                    {thumbnailPreviewFailed ? (
+                      <div className="flex h-12 w-16 shrink-0 items-center justify-center rounded-lg bg-white/10 text-center text-[10px] text-white/55">
+                        Preview unavailable
+                      </div>
+                    ) : (
+                      <Image
+                        key={thumbnailImagePreview}
+                        src={thumbnailImagePreview}
+                        alt="Event thumbnail preview"
+                        width={96}
+                        height={64}
+                        unoptimized
+                        onError={() => setThumbnailPreviewFailed(true)}
+                        className="h-16 w-24 shrink-0 rounded-lg object-cover ring-1 ring-white/15"
+                      />
+                    )}
                     <span className="min-w-0 flex-1 truncate text-xs text-white/70">
-                      {thumbnailFileName}
+                      {thumbnailFileName || "Event thumbnail preview"}
                     </span>
+                    <button
+                      type="button"
+                      onClick={removeUploadedThumbnail}
+                      aria-label="Remove event thumbnail"
+                      title="Remove event thumbnail"
+                      className="flex size-9 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/[0.06] text-white/65 transition hover:border-rose-300/40 hover:bg-rose-400/15 hover:text-rose-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-200"
+                    >
+                      <svg aria-hidden="true" viewBox="0 0 20 20" fill="currentColor" className="size-4">
+                        <path d="M5.28 5.28a.75.75 0 0 1 1.06 0L10 8.94l3.66-3.66a.75.75 0 1 1 1.06 1.06L11.06 10l3.66 3.66a.75.75 0 1 1-1.06 1.06L10 11.06l-3.66 3.66a.75.75 0 1 1-1.06-1.06L8.94 10 5.28 6.34a.75.75 0 0 1 0-1.06Z" />
+                      </svg>
+                    </button>
                   </div>
                 ) : (
                   <span className="mt-1.5 block text-xs font-normal text-white/60">
-                    Uploaded images are preview-only. Use a public HTTP or HTTPS
-                    URL to create the event.
+                    Select an image to upload it, or enter a public HTTP or
+                    HTTPS URL instead.
                   </span>
                 )}
               </div>
@@ -417,6 +515,8 @@ export default function CreateEventForm() {
                   name="description"
                   required
                   maxLength={3000}
+                  minLength={1}
+                  autoComplete="off"
                   placeholder="What will happen? Who can join? What should people bring?"
                 />
               </label>

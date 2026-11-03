@@ -2,25 +2,43 @@
 
 import { useEffect, useState } from "react";
 import EventCard from "@/components/event-card";
+import EventListSkeleton from "@/components/event-list-skeleton";
 import { getUpcomingEvents } from "@/lib/event-api";
 import type { PublicEvent } from "@/lib/events";
 
 export default function UpcomingEventsGrid({
   limit,
+  cardVariant = "default",
+  showPagination = false,
 }: {
   limit: number;
+  cardVariant?: "default" | "spotlight" | "neon";
+  showPagination?: boolean;
 }) {
   const [events, setEvents] = useState<PublicEvent[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [loadedRequestKey, setLoadedRequestKey] = useState<string | null>(null);
+  const [pagination, setPagination] = useState<{
+    total: number;
+    totalPages: number;
+  }>({ total: 0, totalPages: 0 });
   const [errorMessage, setErrorMessage] = useState("");
+  const requestKey = `${limit}:${page}`;
+  const isLoading = loadedRequestKey !== requestKey;
 
   useEffect(() => {
     let active = true;
 
-    getUpcomingEvents(limit)
-      .then(({ events: upcomingEvents }) => {
+    getUpcomingEvents(limit, page)
+      .then(({ events: upcomingEvents, pagination: eventPagination }) => {
         if (active) {
           setEvents(upcomingEvents);
+          setErrorMessage("");
+          setPagination({
+            total: eventPagination.total,
+            totalPages: eventPagination.totalPages,
+          });
+          setLoadedRequestKey(requestKey);
         }
       })
       .catch((error: unknown) => {
@@ -30,25 +48,17 @@ export default function UpcomingEventsGrid({
               ? error.message
               : "Unable to load upcoming events.",
           );
-        }
-      })
-      .finally(() => {
-        if (active) {
-          setIsLoading(false);
+          setLoadedRequestKey(requestKey);
         }
       });
 
     return () => {
       active = false;
     };
-  }, [limit]);
+  }, [limit, page, requestKey]);
 
   if (isLoading) {
-    return (
-      <p role="status" className="text-sm text-white/60">
-        Loading upcoming events…
-      </p>
-    );
+    return <EventListSkeleton count={Math.min(limit, 6)} />;
   }
 
   if (errorMessage) {
@@ -71,10 +81,39 @@ export default function UpcomingEventsGrid({
   }
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      {events.map((event) => (
-        <EventCard key={event.id} event={event} />
-      ))}
-    </div>
+    <>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {events.map((event) => (
+          <EventCard key={event.id} event={event} variant={cardVariant} />
+        ))}
+      </div>
+      {showPagination && pagination.totalPages > 1 && (
+        <nav
+          aria-label="Upcoming event pages"
+          className="mt-8 flex flex-wrap items-center justify-center gap-3"
+        >
+          <button
+            type="button"
+            disabled={page === 1 || isLoading}
+            onClick={() => setPage((currentPage) => currentPage - 1)}
+            className="min-h-10 rounded-full border border-white/15 bg-white/5 px-4 text-sm font-semibold text-white/80 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-45"
+          >
+            Previous
+          </button>
+          <span aria-live="polite" className="text-sm text-white/65">
+            Page {page} of {pagination.totalPages}
+            <span className="sr-only">, {pagination.total} events total</span>
+          </span>
+          <button
+            type="button"
+            disabled={page >= pagination.totalPages || isLoading}
+            onClick={() => setPage((currentPage) => currentPage + 1)}
+            className="min-h-10 rounded-full border border-white/15 bg-white/5 px-4 text-sm font-semibold text-white/80 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-45"
+          >
+            Next
+          </button>
+        </nav>
+      )}
+    </>
   );
 }

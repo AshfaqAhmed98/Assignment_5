@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import EventDetailsSkeleton from "@/components/event-details-skeleton";
 import JoinEventButton from "@/components/join-event-button";
 import { getEvent } from "@/lib/event-api";
 import type { PublicEvent } from "@/lib/events";
@@ -42,11 +43,7 @@ export default function EventDetails({ eventId }: { eventId: string }) {
   }, [eventId]);
 
   if (isLoading) {
-    return (
-      <main className="flex flex-1 items-center justify-center bg-[#0b0b12] px-5 py-20 text-sm text-white/60">
-        Loading event details…
-      </main>
-    );
+    return <EventDetailsSkeleton />;
   }
 
   if (errorMessage || !event) {
@@ -145,7 +142,7 @@ export default function EventDetails({ eventId }: { eventId: string }) {
           <aside className="h-fit rounded-2xl border border-violet-200/15 bg-gradient-to-br from-violet-400/10 to-fuchsia-400/5 p-5 sm:p-6 lg:w-64">
             <p className="text-sm font-bold text-white">Be part of it</p>
             <p className="mt-2 text-xs leading-5 text-white/60">
-              Join the community and take part in this event.
+              See how you can take part in this event.
             </p>
             <div className="mt-5">
               {isUpcoming ? (

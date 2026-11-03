@@ -98,8 +98,9 @@ export default function Home() {
   return (
     <main className="flex-1 bg-[#1a1424] text-white">
       <section
+        id="banner"
         aria-label="Community service highlights"
-        className="relative isolate flex min-h-[min(780px,calc(100svh-76px))] items-center justify-center overflow-hidden px-5 py-20 sm:px-12 lg:px-24"
+        className="relative isolate flex min-h-[min(780px,calc(100svh-76px))] scroll-mt-[68px] items-center justify-center overflow-hidden px-5 py-20 sm:px-12 lg:px-24 md:scroll-mt-[76px]"
       >
         <div
           aria-hidden="true"
@@ -230,7 +231,7 @@ export default function Home() {
             {banner.eyebrow}
             <span aria-hidden="true" className="hidden h-px w-8 bg-gradient-to-r from-fuchsia-300 to-cyan-300 sm:block" />
           </p>
-          <h1 className="mt-5 font-sans text-4xl font-extrabold uppercase leading-[1.05] tracking-[0.015em] drop-shadow-[0_3px_22px_rgba(0,0,0,0.55)] sm:text-5xl md:text-6xl lg:text-7xl">
+          <h1 className="banner-heading mt-5 font-sans font-extrabold uppercase leading-[1.05] tracking-normal drop-shadow-[0_3px_22px_rgba(0,0,0,0.55)]">
             <span className="block bg-gradient-to-r from-cyan-100 via-fuchsia-100 to-violet-100 bg-clip-text text-transparent">
               {banner.heading}
             </span>
@@ -506,7 +507,7 @@ export default function Home() {
               </Link>
           </div>
 
-          <UpcomingEventsGrid limit={3} />
+          <UpcomingEventsGrid limit={6} cardVariant="spotlight" />
         </div>
       </section>
 

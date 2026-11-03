@@ -17,12 +17,36 @@ export default function LoginPage() {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const formData = new FormData(event.currentTarget);
+    const form = event.currentTarget;
+    const emailInput = form.elements.namedItem("email");
+    const passwordInput = form.elements.namedItem("password");
+    if (
+      !(emailInput instanceof HTMLInputElement) ||
+      !emailInput.validity.valid ||
+      emailInput.value.trim().length > 254
+    ) {
+      setToast({ type: "error", message: "Enter a valid email address." });
+      return;
+    }
+
+    if (
+      !(passwordInput instanceof HTMLInputElement) ||
+      passwordInput.value.length === 0 ||
+      passwordInput.value.length > 128
+    ) {
+      setToast({
+        type: "error",
+        message: "Password is required and must be 128 characters or fewer.",
+      });
+      return;
+    }
+
+    const formData = new FormData(form);
     setIsSubmitting(true);
 
     try {
       await login(
-        String(formData.get("email") ?? ""),
+        String(formData.get("email") ?? "").trim(),
         String(formData.get("password") ?? ""),
       );
       const callbackURL = new URLSearchParams(window.location.search).get(
@@ -43,12 +67,11 @@ export default function LoginPage() {
     }
   }
 
-  async function handleGoogleSignIn(credential: string) {
+  async function handleGoogleSignIn() {
     setIsSubmitting(true);
     setToast(null);
 
     try {
-      await loginWithGoogle(credential);
       const callbackURL = new URLSearchParams(window.location.search).get(
         "callbackURL",
       );
@@ -56,7 +79,7 @@ export default function LoginPage() {
         callbackURL?.startsWith("/") && !callbackURL.startsWith("//")
           ? callbackURL
           : "/events";
-      router.replace(destination);
+      await loginWithGoogle(destination);
     } finally {
       setIsSubmitting(false);
     }
@@ -113,13 +136,13 @@ export default function LoginPage() {
             <GoogleAuthButton
               action="signin"
               disabled={isSubmitting}
-              onCredential={handleGoogleSignIn}
+              onClick={handleGoogleSignIn}
               onError={(message) =>
                 setToast({ type: "error", message })
               }
             />
 
-            <div className="my-6 flex items-center gap-4">
+            <div className="mb-6 mt-0 flex items-center gap-4">
               <span className="h-px flex-1 bg-white/10" />
               <span className="text-xs font-medium uppercase tracking-[0.12em] text-white/35">
                 or with email
@@ -127,7 +150,7 @@ export default function LoginPage() {
               <span className="h-px flex-1 bg-white/10" />
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form onSubmit={handleSubmit} noValidate className="space-y-5">
               <div>
                 <label
                   htmlFor="email"
@@ -141,6 +164,7 @@ export default function LoginPage() {
                   type="email"
                   autoComplete="email"
                   required
+                  maxLength={254}
                   placeholder="you@example.com"
                   className="min-h-12 w-full rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-sm text-white outline-none transition placeholder:text-white/30 hover:border-white/20 focus:border-fuchsia-400/70 focus:ring-4 focus:ring-fuchsia-400/10"
                 />
@@ -162,6 +186,7 @@ export default function LoginPage() {
                     type={passwordVisible ? "text" : "password"}
                     autoComplete="current-password"
                     required
+                    maxLength={128}
                     placeholder="Enter your password"
                     className="min-h-12 w-full rounded-xl border border-white/10 bg-black/20 px-4 py-3 pr-16 text-sm text-white outline-none transition placeholder:text-white/30 hover:border-white/20 focus:border-fuchsia-400/70 focus:ring-4 focus:ring-fuchsia-400/10"
                   />

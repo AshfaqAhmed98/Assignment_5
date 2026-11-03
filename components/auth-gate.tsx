@@ -2,6 +2,7 @@
 
 import { useEffect, type ReactNode } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import LoadingAnimation from "@/components/loading-animation";
 import { useAuth } from "@/lib/auth";
 
 export default function AuthGate({ children }: { children: ReactNode }) {
@@ -18,8 +19,8 @@ export default function AuthGate({ children }: { children: ReactNode }) {
 
   if (status === "loading") {
     return (
-      <main className="flex flex-1 items-center justify-center bg-[#0b0b12] px-5 py-20 text-sm text-white/65">
-        Checking your sign-in…
+      <main className="flex flex-1 items-center justify-center bg-[#0b0b12] px-5 py-20">
+        <LoadingAnimation label="Checking your sign-in…" />
       </main>
     );
   }
