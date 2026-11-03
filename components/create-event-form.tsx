@@ -230,9 +230,9 @@ export default function CreateEventForm() {
 
   return (
     <main className="flex-1 bg-[#0b0b12] px-3 py-6 sm:px-6 sm:py-10 lg:px-8 lg:py-12">
-      <section className="mx-auto grid min-h-[min(780px,calc(100svh-128px))] max-w-6xl overflow-hidden rounded-3xl border border-white/10 bg-[#15151d] shadow-[0_24px_80px_rgba(0,0,0,0.4)] lg:grid-cols-[0.78fr_1.22fr]">
+      <section className="mx-auto grid min-h-[min(780px,calc(100svh-128px))] max-w-6xl rounded-3xl border border-white/10 bg-[#15151d] shadow-[0_24px_80px_rgba(0,0,0,0.4)] lg:grid-cols-[0.78fr_1.22fr]">
         <aside
-          className="relative flex min-h-[400px] flex-col justify-between overflow-hidden bg-cover bg-center p-7 text-white sm:p-10 lg:min-h-[720px] lg:p-12"
+          className="relative flex min-h-[400px] flex-col justify-between overflow-hidden rounded-t-3xl bg-cover bg-center p-7 text-white sm:p-10 lg:min-h-[720px] lg:rounded-l-3xl lg:rounded-tr-none lg:p-12"
           style={{ backgroundImage: "url('/community-events-background.jpg')" }}
         >
           <div
@@ -293,7 +293,7 @@ export default function CreateEventForm() {
           </div>
         </aside>
 
-        <div className="bg-[#15151d] px-5 py-8 text-white sm:px-9 sm:py-10 lg:px-12 lg:py-12">
+        <div className="rounded-b-3xl bg-[#15151d] px-5 py-8 text-white sm:px-9 sm:py-10 lg:rounded-b-none lg:rounded-r-3xl lg:px-12 lg:py-12">
           <div className="mx-auto max-w-2xl">
             <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.16em] text-violet-300">
               <span className="size-1.5 rounded-full bg-violet-300 shadow-[0_0_8px_rgba(196,181,253,0.65)]" />
@@ -369,7 +369,7 @@ export default function CreateEventForm() {
                   <span className="text-xs text-white/50">JPG or PNG</span>
                 </div>
                 <div
-                  className="relative"
+                  className={`relative ${isThumbnailMenuOpen ? "z-30" : ""}`}
                   onBlur={(event) => {
                     if (!event.currentTarget.contains(event.relatedTarget)) {
                       setIsThumbnailMenuOpen(false);
@@ -406,7 +406,7 @@ export default function CreateEventForm() {
                     onClick={() =>
                       setIsThumbnailMenuOpen((isOpen) => !isOpen)
                     }
-                    className="absolute right-2 top-1/2 flex size-8 -translate-y-1/2 items-center justify-center rounded-lg text-white/55 transition hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-fuchsia-300 disabled:cursor-not-allowed"
+                    className={`form-source-trigger ${isThumbnailMenuOpen ? "form-source-trigger-open" : ""}`}
                   >
                     <svg
                       aria-hidden="true"
@@ -425,7 +425,7 @@ export default function CreateEventForm() {
                     <div
                       role="listbox"
                       aria-label="Thumbnail image options"
-                      className="absolute right-0 top-full z-30 mt-2 w-full overflow-hidden rounded-xl border border-violet-300/20 bg-[#211b35] p-1.5 shadow-[0_16px_40px_rgba(0,0,0,0.5)]"
+                      className="form-source-options"
                     >
                       <button
                         type="button"
@@ -439,7 +439,7 @@ export default function CreateEventForm() {
                           setThumbnailPreviewFailed(false);
                           setIsThumbnailMenuOpen(false);
                         }}
-                        className="flex w-full items-center rounded-lg px-3 py-2.5 text-left text-sm font-medium text-white/85 transition hover:bg-violet-400/15 hover:text-white"
+                        className="form-source-option"
                       >
                         Use an image URL
                       </button>
@@ -451,7 +451,7 @@ export default function CreateEventForm() {
                           setIsThumbnailMenuOpen(false);
                           thumbnailFileInputRef.current?.click();
                         }}
-                        className="flex w-full items-center rounded-lg px-3 py-2.5 text-left text-sm font-medium text-white/85 transition hover:bg-fuchsia-400/15 hover:text-white"
+                        className="form-source-option"
                       >
                         Upload a JPG or PNG
                       </button>

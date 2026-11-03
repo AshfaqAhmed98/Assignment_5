@@ -357,7 +357,7 @@ function EventEditor({
               </label>
               <span className="text-xs font-normal text-white/50">JPG or PNG</span>
             </div>
-            <div className="relative">
+            <div className={`relative ${isThumbnailMenuOpen ? "z-30" : ""}`}>
               {thumbnailMode === "url" ? (
                 <input
                   id={`manage-thumbnail-url-${event.id}`}
@@ -397,7 +397,7 @@ function EventEditor({
                 aria-haspopup="listbox"
                 aria-expanded={isThumbnailMenuOpen}
                 onClick={() => setIsThumbnailMenuOpen((open) => !open)}
-                className="absolute right-2 top-1/2 flex size-8 -translate-y-1/2 items-center justify-center rounded-lg text-white/55 transition hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-fuchsia-300"
+                className={`form-source-trigger ${isThumbnailMenuOpen ? "form-source-trigger-open" : ""}`}
               >
                 <svg
                   aria-hidden="true"
@@ -416,7 +416,7 @@ function EventEditor({
                 <div
                   role="listbox"
                   aria-label="Thumbnail image options"
-                  className="absolute right-0 top-full z-30 mt-2 w-full overflow-hidden rounded-xl border border-violet-300/20 bg-[#211b35] p-1.5 shadow-[0_16px_40px_rgba(0,0,0,0.5)]"
+                  className="form-source-options"
                 >
                   <button
                     type="button"
@@ -429,7 +429,7 @@ function EventEditor({
                       setThumbnailFileName("");
                       setIsThumbnailMenuOpen(false);
                     }}
-                    className="flex w-full items-center rounded-lg px-3 py-2.5 text-left text-sm font-medium text-white/85 transition hover:bg-violet-400/15 hover:text-white"
+                    className="form-source-option"
                   >
                     Use an image URL
                   </button>
@@ -442,7 +442,7 @@ function EventEditor({
                       setIsThumbnailMenuOpen(false);
                       thumbnailFileInputRef.current?.click();
                     }}
-                    className="flex w-full items-center rounded-lg px-3 py-2.5 text-left text-sm font-medium text-white/85 transition hover:bg-fuchsia-400/15 hover:text-white"
+                    className="form-source-option"
                   >
                     Upload a JPG or PNG
                   </button>

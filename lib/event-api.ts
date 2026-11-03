@@ -53,9 +53,7 @@ export async function getUpcomingEvents(limit: number, page = 1) {
     sort: "eventDate",
     order: "asc",
   });
-  const response = await fetch(`/backend/api/events?${query}`, {
-    cache: "no-store",
-  });
+  const response = await fetch(`/api/public-events?${query}`);
 
   if (!response.ok) {
     throw new Error(await getErrorMessage(response));

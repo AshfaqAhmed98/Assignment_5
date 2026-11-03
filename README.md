@@ -53,14 +53,14 @@ provides navigation and project information across routes. Use the theme toggle
 in the navbar to switch between the persisted light and dark themes.
 
 BetterAuth uses the backend's `BETTER_AUTH_URL`, `BETTER_AUTH_SECRET`,
-`FRONTEND_ORIGIN`, and Google OAuth credentials. Set
-`NEXT_PUBLIC_BACKEND_URL` in `Frontend/.env.local` to the same backend origin
-as `BETTER_AUTH_URL` (for local development, `http://localhost:3001`), then
-restart both servers. The backend accepts credentialed cross-origin auth
-requests from the configured frontend origins. In Google Cloud Console,
-configure the BetterAuth
-callback URL as an authorized redirect URI:
-`<BETTER_AUTH_URL>/api/better-auth/callback/google`.
+`FRONTEND_ORIGIN`, and Google OAuth credentials. Since the frontend proxies
+BetterAuth requests and callbacks, set `BETTER_AUTH_URL` to the frontend
+origin. Set `NEXT_PUBLIC_BACKEND_URL` in `Frontend/.env.local` to the backend
+origin (for local development, `http://localhost:3001`), then restart both
+servers. The backend accepts credentialed cross-origin auth requests from the
+configured frontend origins. In Google Cloud Console, configure the Better
+Auth callback URL as an authorized redirect URI:
+`<frontend-origin>/api/better-auth/callback/google`.
 Google profile photos and registration photo URLs appear in the signed-in
 navbar. Uploaded registration photos are stored by the backend and shown on
 the signed-in profile. The authenticated navbar includes a logout button.

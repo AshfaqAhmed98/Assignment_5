@@ -287,7 +287,7 @@ export default function RegisterPage() {
               <span className="text-xs text-white/45">JPG or PNG</span>
             </div>
             <div
-              className="relative"
+              className={`relative ${isPhotoMenuOpen ? "z-30" : ""}`}
               onBlur={(event) => {
                 if (!event.currentTarget.contains(event.relatedTarget)) {
                   setIsPhotoMenuOpen(false);
@@ -318,7 +318,7 @@ export default function RegisterPage() {
                 aria-haspopup="listbox"
                 aria-expanded={isPhotoMenuOpen}
                 onClick={() => setIsPhotoMenuOpen((isOpen) => !isOpen)}
-                className="absolute right-2 top-1/2 flex size-8 -translate-y-1/2 items-center justify-center rounded-lg text-white/55 transition hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-fuchsia-300"
+                className={`form-source-trigger ${isPhotoMenuOpen ? "form-source-trigger-open" : ""}`}
               >
                 <svg aria-hidden="true" viewBox="0 0 20 20" fill="currentColor" className={`size-4 transition-transform ${isPhotoMenuOpen ? "rotate-180" : ""}`}>
                   <path fillRule="evenodd" d="M5.22 7.47a.75.75 0 0 1 1.06 0L10 11.19l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 8.53a.75.75 0 0 1 0-1.06Z" clipRule="evenodd" />
@@ -329,7 +329,7 @@ export default function RegisterPage() {
                 <div
                   role="listbox"
                   aria-label="Profile photo options"
-                  className="absolute right-0 top-full z-30 mt-2 w-full overflow-hidden rounded-xl border border-violet-300/20 bg-[#211b35] p-1.5 shadow-[0_16px_40px_rgba(0,0,0,0.5)]"
+                  className="form-source-options"
                 >
                   <button
                     type="button"
@@ -343,7 +343,7 @@ export default function RegisterPage() {
                       setPhotoPreviewFailed(false);
                       setIsPhotoMenuOpen(false);
                     }}
-                    className="flex w-full items-center rounded-lg px-3 py-2.5 text-left text-sm font-medium text-white/85 transition hover:bg-violet-400/15 hover:text-white"
+                    className="form-source-option"
                   >
                     Use a photo URL
                   </button>
@@ -355,7 +355,7 @@ export default function RegisterPage() {
                       setIsPhotoMenuOpen(false);
                       photoFileInputRef.current?.click();
                     }}
-                    className="flex w-full items-center rounded-lg px-3 py-2.5 text-left text-sm font-medium text-white/85 transition hover:bg-fuchsia-400/15 hover:text-white"
+                    className="form-source-option"
                   >
                     Upload a JPG or PNG
                   </button>

@@ -71,7 +71,13 @@ function ProfileAvatar({
 }
 
 export default function Navbar() {
-  const { user, status, error, logout, retrySession } = useAuth();
+  const {
+    user,
+    status,
+    error,
+    logout,
+    retrySession,
+  } = useAuth();
   const router = useRouter();
   const profileMenuRef = useRef<HTMLDetailsElement>(null);
   const [logoutError, setLogoutError] = useState("");

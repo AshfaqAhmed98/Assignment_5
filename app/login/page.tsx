@@ -2,18 +2,72 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useState, type FormEvent } from "react";
 import AuthToast, { type AuthToastMessage } from "@/components/auth-toast";
 import GoogleAuthButton from "@/components/google-auth-button";
+import LoadingAnimation from "@/components/loading-animation";
 import { useAuth } from "@/lib/auth";
 
 export default function LoginPage() {
-  const { login, loginWithGoogle } = useAuth();
+  const { login, loginWithGoogle, status } = useAuth();
   const router = useRouter();
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [toast, setToast] = useState<AuthToastMessage | null>(null);
   const dismissToast = useCallback(() => setToast(null), []);
+
+  useEffect(() => {
+    if (status !== "authenticated") {
+      return;
+    }
+
+    const callbackURL = new URLSearchParams(window.location.search).get(
+      "callbackURL",
+    );
+    const destination =
+      callbackURL?.startsWith("/") && !callbackURL.startsWith("//")
+        ? callbackURL
+        : "/events";
+    router.replace(destination);
+  }, [router, status]);
+
+  useEffect(() => {
+    const currentURL = new URL(window.location.href);
+    const error = currentURL.searchParams.get("error");
+
+    if (error === "account_not_linked") {
+      const timeoutId = window.setTimeout(
+        () =>
+          setToast({
+            type: "error",
+            message:
+              "This Google email matches an existing account that is not linked to Google. Try signing in with the account's existing email and password.",
+          }),
+        0,
+      );
+      currentURL.searchParams.delete("error");
+      window.history.replaceState(
+        null,
+        "",
+        `${currentURL.pathname}${currentURL.search}${currentURL.hash}`,
+      );
+      return () => window.clearTimeout(timeoutId);
+    }
+  }, []);
+
+  if (status === "loading" || status === "authenticated") {
+    return (
+      <main className="flex flex-1 items-center justify-center bg-[#0b0b12] px-5 py-20">
+        <LoadingAnimation
+          label={
+            status === "loading"
+              ? "Checking your sign-in…"
+              : "You’re already signed in…"
+          }
+        />
+      </main>
+    );
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();

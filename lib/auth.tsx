@@ -43,6 +43,7 @@ type AuthResponse = {
 };
 
 const storageKey = "eventmatrix.access-token";
+const productionOrigin = "https://eventmatrix-frontend.vercel.app";
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function getAccessToken() {
@@ -320,12 +321,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const loginWithGoogle = useCallback(async (callbackURL?: string) => {
+    const destination =
+      callbackURL?.startsWith("/") && !callbackURL.startsWith("//")
+        ? callbackURL
+        : "/events";
+    const hostname = window.location.hostname;
+    const isVercelPreview =
+      hostname.endsWith(".vercel.app") &&
+      window.location.origin !== productionOrigin;
+
+    if (isVercelPreview) {
+      const loginURL = new URL("/login", productionOrigin);
+      loginURL.searchParams.set("callbackURL", destination);
+      window.location.assign(loginURL);
+      return;
+    }
+
     const result = await authClient.signIn.social({
       provider: "google",
-      callbackURL:
-        callbackURL?.startsWith("/") && !callbackURL.startsWith("//")
-          ? `${window.location.origin}${callbackURL}`
-          : `${window.location.origin}/events`,
+      callbackURL: `${window.location.origin}${destination}`,
     });
 
     if (result.error) {
