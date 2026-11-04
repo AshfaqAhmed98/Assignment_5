@@ -27,7 +27,14 @@ export default function JoinedEventsGrid() {
       })
       .then(({ events: joinedEvents }) => {
         if (active) {
-          setEvents(joinedEvents);
+          setEvents(
+            [...joinedEvents].sort(
+              (first, second) =>
+                new Date(first.eventDate).getTime() -
+                  new Date(second.eventDate).getTime() ||
+                first.id.localeCompare(second.id),
+            ),
+          );
         }
       })
       .catch((error: unknown) => {
