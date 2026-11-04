@@ -8,6 +8,7 @@ import {
   useState,
   type ChangeEvent,
   type FormEvent,
+  type KeyboardEvent,
 } from "react";
 import { getAccessToken } from "@/lib/auth";
 import {
@@ -48,13 +49,31 @@ function EventEditor({
   const [successMessage, setSuccessMessage] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [thumbnailMode, setThumbnailMode] = useState<"url" | "upload">("url");
   const [thumbnailUrl, setThumbnailUrl] = useState(event.thumbnailUrl);
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
   const [thumbnailPreview, setThumbnailPreview] = useState("");
   const [thumbnailFileName, setThumbnailFileName] = useState("");
   const [isThumbnailMenuOpen, setIsThumbnailMenuOpen] = useState(false);
+  const deleteDialogRef = useRef<HTMLDivElement>(null);
+  const deleteCancelButtonRef = useRef<HTMLButtonElement>(null);
+  const deleteTriggerRef = useRef<HTMLButtonElement>(null);
   const thumbnailFileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!isDeleteDialogOpen) {
+      return;
+    }
+
+    const deleteTrigger = deleteTriggerRef.current;
+    deleteCancelButtonRef.current?.focus();
+    return () => {
+      if (deleteTrigger?.isConnected) {
+        deleteTrigger.focus();
+      }
+    };
+  }, [isDeleteDialogOpen]);
 
   useEffect(
     () => () => {
@@ -200,11 +219,7 @@ function EventEditor({
     }
   }
 
-  async function handleDelete() {
-    if (!window.confirm(`Delete "${event.title}"? This cannot be undone.`)) {
-      return;
-    }
-
+  async function confirmDelete() {
     setErrorMessage("");
     setSuccessMessage("");
     const token = getAccessToken();
@@ -216,6 +231,7 @@ function EventEditor({
     setIsDeleting(true);
     try {
       await deleteEvent(token, event.id);
+      setIsDeleteDialogOpen(false);
       onDeleted(event.id);
     } catch (error: unknown) {
       setErrorMessage(
@@ -223,6 +239,39 @@ function EventEditor({
       );
     } finally {
       setIsDeleting(false);
+    }
+  }
+
+  function handleDeleteDialogKeyDown(
+    keyEvent: KeyboardEvent<HTMLDivElement>,
+  ) {
+    if (keyEvent.key === "Escape" && !isDeleting) {
+      keyEvent.preventDefault();
+      setIsDeleteDialogOpen(false);
+      return;
+    }
+
+    if (keyEvent.key !== "Tab") {
+      return;
+    }
+
+    const buttons =
+      deleteDialogRef.current?.querySelectorAll<HTMLButtonElement>(
+        "button:not(:disabled)",
+      );
+    if (!buttons?.length) {
+      keyEvent.preventDefault();
+      return;
+    }
+
+    const firstButton = buttons[0];
+    const lastButton = buttons[buttons.length - 1];
+    if (keyEvent.shiftKey && document.activeElement === firstButton) {
+      keyEvent.preventDefault();
+      lastButton.focus();
+    } else if (!keyEvent.shiftKey && document.activeElement === lastButton) {
+      keyEvent.preventDefault();
+      firstButton.focus();
     }
   }
 
@@ -286,8 +335,12 @@ function EventEditor({
                 View event
               </Link>
               <button
+                ref={deleteTriggerRef}
                 type="button"
-                onClick={handleDelete}
+                onClick={() => {
+                  setErrorMessage("");
+                  setIsDeleteDialogOpen(true);
+                }}
                 disabled={isDeleting}
                 className="inline-flex min-h-10 items-center justify-center rounded-full border border-rose-200/20 bg-rose-300/5 px-4 text-sm font-bold text-rose-200 transition hover:bg-rose-300/10 disabled:cursor-wait disabled:opacity-60"
               >
@@ -506,7 +559,7 @@ function EventEditor({
           </div>
         </form>
       )}
-      {errorMessage && !isEditing && (
+      {errorMessage && !isEditing && !isDeleteDialogOpen && (
         <p
           role="alert"
           className="border-t border-rose-200/10 px-5 py-3 text-sm text-rose-200"
@@ -521,6 +574,105 @@ function EventEditor({
         >
           {successMessage}
         </p>
+      )}
+      {isDeleteDialogOpen && (
+        <div
+          className="delete-confirm-backdrop"
+        >
+          <div
+            ref={deleteDialogRef}
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby={`delete-dialog-title-${event.id}`}
+            aria-describedby={`delete-dialog-description-${event.id}`}
+            tabIndex={-1}
+            onKeyDown={handleDeleteDialogKeyDown}
+            className="delete-confirm-panel"
+          >
+            <div className="delete-confirm-decoration" aria-hidden="true" />
+            <div className="delete-confirm-content">
+              <div className="delete-confirm-icon" aria-hidden="true">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.7"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M4 7h16M10 11v6m4-6v6M5.5 7l1 13h11l1-13M9 7V4h6v3" />
+                  <path d="m18.5 3 .6 1.3 1.4.2-1 .9.2 1.4-1.2-.7-1.2.7.2-1.4-1-.9 1.4-.2.6-1.3Z" />
+                </svg>
+              </div>
+              <p className="delete-confirm-eyebrow">Event removal</p>
+              <h2
+                id={`delete-dialog-title-${event.id}`}
+                className="delete-confirm-title"
+              >
+                Let this event go?
+              </h2>
+              <p
+                id={`delete-dialog-description-${event.id}`}
+                className="delete-confirm-description"
+              >
+                This will permanently remove the event. There’s no way to undo
+                this afterward.
+              </p>
+              <div className="delete-confirm-event">
+                <span className="delete-confirm-event-mark" aria-hidden="true">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M12 21s7-4.4 7-11V5l-7-3-7 3v5c0 6.6 7 11 7 11Z" />
+                    <path d="m9 12 2 2 4-4" />
+                  </svg>
+                </span>
+                <span className="min-w-0">
+                  <span className="delete-confirm-event-label">
+                    You’re removing
+                  </span>
+                  <span className="delete-confirm-event-title">{event.title}</span>
+                </span>
+              </div>
+              {errorMessage && (
+                <p role="alert" className="delete-confirm-error">
+                  {errorMessage}
+                </p>
+              )}
+              <div className="delete-confirm-actions">
+                <button
+                  ref={deleteCancelButtonRef}
+                  type="button"
+                  onClick={() => setIsDeleteDialogOpen(false)}
+                  disabled={isDeleting}
+                  className="delete-confirm-cancel"
+                >
+                  Keep event
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void confirmDelete()}
+                  disabled={isDeleting}
+                  className="delete-confirm-submit"
+                >
+                  {isDeleting ? (
+                    <>
+                      <span className="delete-confirm-spinner" aria-hidden="true" />
+                      Removing…
+                    </>
+                  ) : (
+                    "Yes, delete it"
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </article>
   );
