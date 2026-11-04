@@ -369,7 +369,7 @@ export default function CreateEventForm() {
                   <span className="text-xs text-white/50">JPG or PNG</span>
                 </div>
                 <div
-                  className={`relative ${isThumbnailMenuOpen ? "z-30" : ""}`}
+                  className={`form-source-field-with-margin relative ${isThumbnailMenuOpen ? "z-30" : ""}`}
                   onBlur={(event) => {
                     if (!event.currentTarget.contains(event.relatedTarget)) {
                       setIsThumbnailMenuOpen(false);

@@ -410,7 +410,9 @@ function EventEditor({
               </label>
               <span className="text-xs font-normal text-white/50">JPG or PNG</span>
             </div>
-            <div className={`relative ${isThumbnailMenuOpen ? "z-30" : ""}`}>
+            <div
+              className={`form-source-field-with-margin relative ${isThumbnailMenuOpen ? "z-30" : ""}`}
+            >
               {thumbnailMode === "url" ? (
                 <input
                   id={`manage-thumbnail-url-${event.id}`}

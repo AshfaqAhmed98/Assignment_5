@@ -1621,6 +1621,14 @@
       color 180ms ease;
   }
 
+  .form-source-field-with-margin {
+    display: flow-root;
+  }
+
+  .form-source-field-with-margin .form-source-trigger {
+    top: calc(50% + 0.25rem);
+  }
+
   .form-source-trigger:hover,
   .form-source-trigger-open {
     border-color: rgb(167 139 250 / 42%);
