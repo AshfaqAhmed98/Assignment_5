@@ -39,8 +39,8 @@ function ProfileAvatar({
   const imageSize = large ? 56 : 40;
 
   return (
-    <span className={`group/avatar relative flex ${sizeClassName} shrink-0 items-center justify-center overflow-visible rounded-full text-sm font-bold text-white`}>
-      <span className="flex size-full items-center justify-center overflow-hidden rounded-full bg-[#252033]">
+    <span className={`profile-avatar group/avatar relative flex ${sizeClassName} shrink-0 items-center justify-center overflow-visible rounded-full text-sm font-bold`}>
+      <span className="profile-avatar-surface flex size-full items-center justify-center overflow-hidden rounded-full">
         {user.photoURL && !imageFailed ? (
           <Image
             src={user.photoURL}
@@ -53,7 +53,7 @@ function ProfileAvatar({
             className="size-full scale-[1.35] object-cover object-[center_24%]"
           />
         ) : (
-          <span aria-hidden="true">
+          <span className="profile-avatar-initial" aria-hidden="true">
             {user.name.trim().charAt(0).toUpperCase()}
           </span>
         )}

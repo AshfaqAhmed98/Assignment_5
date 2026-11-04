@@ -1133,6 +1133,20 @@
       linear-gradient(110deg, #100d19, #12101c 55%, #10151c);
   }
 
+  .profile-avatar-surface {
+    background: #252033;
+    color: #fff;
+  }
+
+  .profile-avatar-initial {
+    color: inherit;
+  }
+
+  html[data-theme="light"] .profile-avatar-surface {
+    background: #e7eafb;
+    color: #394b87;
+  }
+
   .event-date-trigger {
     display: flex;
     min-height: 3rem;
