@@ -111,7 +111,22 @@ function getBetterAuthError(
   return new Error(error?.message || fallback);
 }
 
-async function exchangeSessionForApiToken() {
+function getProfileImageURL(value: unknown) {
+  if (typeof value !== "string" || !value.trim() || value.length > 2048) {
+    return undefined;
+  }
+
+  try {
+    const imageURL = new URL(value.trim());
+    return ["http:", "https:"].includes(imageURL.protocol)
+      ? imageURL.toString()
+      : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+async function exchangeSessionForApiToken(sessionImage?: unknown) {
   const response = await fetch("/backend/api/auth/exchange", {
     method: "POST",
     credentials: "include",
@@ -127,7 +142,12 @@ async function exchangeSessionForApiToken() {
   }
 
   window.sessionStorage.setItem(storageKey, body.token);
-  return body.user;
+  const photoURL =
+    getProfileImageURL(sessionImage) ?? getProfileImageURL(body.user.photoURL);
+  return {
+    ...body.user,
+    ...(photoURL ? { photoURL } : {}),
+  };
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -146,7 +166,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return null;
     }
 
-    return exchangeSessionForApiToken();
+    return exchangeSessionForApiToken(result.data.user.image);
   }, []);
 
   const retrySession = useCallback(() => {
@@ -260,7 +280,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     }
 
-    const authenticatedUser = await exchangeSessionForApiToken();
+    const authenticatedUser = await exchangeSessionForApiToken(
+      result.data?.user.image,
+    );
     setUser(authenticatedUser);
     setStatus("authenticated");
     setError(null);
@@ -312,7 +334,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw getBetterAuthError(result.error, "Unable to create your account.");
       }
 
-      const authenticatedUser = await exchangeSessionForApiToken();
+      const authenticatedUser = await exchangeSessionForApiToken(
+        result.data?.user.image,
+      );
       setUser(authenticatedUser);
       setStatus("authenticated");
       setError(null);
