@@ -118,7 +118,7 @@ export default function JoinedEventsGrid() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {events.map((event) => (
           <div key={event.id} className="flex min-w-0 flex-col gap-3">
-            <EventCard event={event} />
+            <EventCard event={event} variant="neon" />
             <button
               type="button"
               onClick={() => void handleLeaveEvent(event.id)}
